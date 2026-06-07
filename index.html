@@ -94,7 +94,7 @@
 
                 <div class="mt-8 pt-6 border-t border-slate-700/60 flex flex-col items-center text-center gap-3">
                     <h3 class="text-sm font-bold text-slate-200">あなたのコミュニティも一覧に掲載しませんか？</h3>
-                    <p class="text-xs text-slate-400 max-w-md">定期オープンプレーを行っている有志のグループやクラブチームの登録申請をお待ちしています。管理者の承認後に一覧へ掲載されます。</p>
+                    <p class="text-xs text-slate-400 max-w-md">定期オープンプレーを行っている有志 of グループやクラブチームの登録申請をお待ちしています。管理者の承認後に一覧へ掲載されます。</p>
                     <button onclick="openOrganizerModalWithPreview()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-full transition shadow flex items-center gap-1.5 mt-1">
                         <i class="fa-solid fa-file-signature"></i> コミュニティの登録申請はこちら
                     </button>
@@ -320,10 +320,11 @@
                     <p class="text-slate-300 leading-relaxed text-xs bg-slate-900/40 p-3 rounded-lg border border-slate-700/50 select-text whitespace-pre-line max-h-40 overflow-y-auto break-all" id="orgDetailDesc"></p>
                 </div>
             </div>
-            <div class="pt-2">
-                <a id="orgDetailLink" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
+            <div class="pt-2 flex gap-2">
+                <a id="orgDetailLink" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
                     <i class="fa-brands fa-facebook"></i> 公式・詳細リンクを開く
                 </a>
+                <button id="orgDetailDeleteBtn" onclick="handleOrganizerDeleteFromModal()" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white px-3 rounded-lg text-xs font-bold hidden">削除</button>
             </div>
         </div>
     </div>
@@ -367,6 +368,7 @@
         let isAdmin = false;
         let selectedEventId = null;
         let selectedEventDate = null; 
+        let selectedOrganizerId = null;
         let calendar = null;
         let clickCount = 0; 
 
@@ -667,6 +669,7 @@
         }
 
         function openOrganizerDetailModal(id) {
+            selectedOrganizerId = id; 
             const org = organizers.find(o => o.id === id);
             if (!org) return;
 
@@ -690,7 +693,21 @@
                 linkEl.classList.add('hidden');
             }
 
+            const delBtn = document.getElementById('orgDetailDeleteBtn');
+            const showDelete = isAdmin || (org.telegram && org.telegram !== '-');
+            if (showDelete) {
+                delBtn.classList.remove('hidden');
+                delBtn.innerText = isAdmin ? "削除 (Admin)" : "削除";
+            } else {
+                delBtn.classList.add('hidden');
+            }
+
             openModal('organizerDetailModal');
+        }
+
+        async function handleOrganizerDeleteFromModal() {
+            if (!selectedOrganizerId) return;
+            await deleteOrganizer(selectedOrganizerId);
         }
 
         function renderOrganizers() {
@@ -702,6 +719,8 @@
                 const logoHtml = org.logo 
                     ? `<img src="${org.logo}" alt="${org.name} Logo" class="w-12 h-12 rounded-full object-cover border border-slate-600 bg-slate-800 shrink-0">`
                     : `<div class="w-12 h-12 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0 select-none">${org.name.substring(0,2)}</div>`;
+
+                const showDelete = isAdmin || (org.telegram && org.telegram !== '-');
 
                 return `
                     <div onclick="openOrganizerDetailModal('${org.id}')" class="bg-slate-700/40 border border-slate-600/50 p-4 rounded-xl flex flex-col justify-between hover:border-emerald-500/50 hover:bg-slate-700/60 cursor-pointer transition">
@@ -720,7 +739,7 @@
                                 <i class="fa-solid fa-expand mr-1"></i>カード詳細
                             </span>
                             <div class="flex items-center gap-2">
-                                ${isAdmin ? `<button onclick="event.stopPropagation(); deleteOrganizer('${org.id}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white text-[10px] px-2 py-1.5 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>` : ''}
+                                ${showDelete ? `<button onclick="event.stopPropagation(); deleteOrganizer('${org.id}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white text-[10px] px-2 py-1.5 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>` : ''}
                                 <a href="${org.link}" target="_blank" onclick="event.stopPropagation();" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1">
                                     公式リンク <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
                                 </a>
@@ -1301,10 +1320,24 @@
         }
 
         async function deleteOrganizer(orgId) {
-            if(!isAdmin) return;
-            if(confirm("このコミュニティ情報を完全に削除しますか？")) {
+            const org = organizers.find(o => o.id === orgId);
+            if (!org) return;
+
+            if (!isAdmin) {
+                const verification = prompt("本人確認のため、登録時の「Telegramユーザー名(アットマーク@なし)」を入力してください:");
+                if (!verification) return;
+
+                const cleanTg = org.telegram.replace('@', '');
+                if (verification.trim().toLowerCase() !== cleanTg.trim().toLowerCase()) {
+                    alert("入力内容が一致しません。削除権限がありません。");
+                    return;
+                }
+            }
+
+            if(confirm(`本当に「${org.name}」のコミュニティ登録情報を完全に削除しますか？`)) {
                 await removeOrganizer(orgId);
                 alert("コミュニティ情報を削除しました。");
+                closeModal('organizerDetailModal');
             }
         }
 
