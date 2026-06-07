@@ -94,7 +94,7 @@
 
                 <div class="mt-8 pt-6 border-t border-slate-700/60 flex flex-col items-center text-center gap-3">
                     <h3 class="text-sm font-bold text-slate-200">あなたのコミュニティも一覧に掲載しませんか？</h3>
-                    <p class="text-xs text-slate-400 max-w-md">定期オープンプレーを行っている有志 of グループやクラブチームの登録申請をお待ちしています。管理者の承認後に一覧へ掲載されます。</p>
+                    <p class="text-xs text-slate-400 max-w-md">定期オープンプレーを行っている有志のグループやクラブチームの登録申請をお待ちしています。管理者の承認後に一覧へ掲載されます。</p>
                     <button onclick="openOrganizerModalWithPreview()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-full transition shadow flex items-center gap-1.5 mt-1">
                         <i class="fa-solid fa-file-signature"></i> コミュニティの登録申請はこちら
                     </button>
@@ -121,6 +121,10 @@
                         <span class="bg-slate-600 text-slate-300 px-3 py-1.5 text-sm flex items-center justify-center font-semibold select-none">@</span>
                         <input type="text" id="formTelegram" placeholder="username" class="w-full bg-transparent px-2 py-1.5 text-sm focus:outline-none text-slate-100" required>
                     </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">削除用パスワード (半角英数4桁以上)</label>
+                    <input type="password" id="formDeletePassword" placeholder="パスワードを設定（数字4桁など）" maxlength="16" minlength="4" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
                 </div>
 
                 <div>
@@ -209,6 +213,10 @@
                         </div>
                     </div>
                     <div>
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">削除用パスワード (半角英数4桁以上)</label>
+                        <input type="password" id="orgFormDeletePassword" placeholder="パスワードを設定（数字4桁など）" maxlength="16" minlength="4" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">チーム名 / コミュニティ名</label>
                         <input type="text" id="orgFormName" placeholder="例: BGC FC" maxlength="30" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
                     </div>
@@ -231,45 +239,45 @@
                         <label class="block text-xs font-semibold text-slate-400 mb-1">連絡先・公式リンクURL (Facebookなど)</label>
                         <input type="url" id="orgFormLink" placeholder="https://facebook.com/..." class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
                     </div>
-                    
-                    <button type="button" onclick="goToOrganizerPreviewStep()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-2 mt-4">
-                        <i class="fa-solid fa-magnifying-glass"></i> プレビューを確認する
+                </form>
+                
+                <button type="button" onclick="goToOrganizerPreviewStep()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-2 mt-4">
+                    <i class="fa-solid fa-magnifying-glass"></i> プレビューを確認する
+                </button>
+            </div>
+
+            <!-- STEP 2: プレビュー画面・申請確定 -->
+            <div id="orgStepPreview" class="space-y-4 hidden">
+                <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block"><i class="fa-solid fa-eye"></i> 表示プレビュー確認</span>
+                
+                <div id="previewCard" class="bg-slate-700/30 border border-emerald-500/30 p-4 rounded-xl flex flex-col justify-between hover:border-emerald-500/50 transition">
+                    <div class="flex gap-3 items-start">
+                        <div id="previewLogoContainer" class="shrink-0"></div>
+                        <div class="space-y-1 overflow-hidden">
+                            <h3 id="previewName" class="text-base font-bold text-white flex items-center gap-2"></h3>
+                            <p class="text-[10px] text-rose-400 font-semibold"><i class="fa-solid fa-map-location-dot"></i> <span id="previewLocation"></span></p>
+                            <p id="previewDesc" class="text-xs text-slate-300 leading-relaxed pt-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;"></p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-slate-600/30 flex justify-between items-center">
+                        <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                            <i class="fa-solid fa-expand mr-1"></i>カード詳細
+                        </span>
+                        <a id="previewLink" href="#" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 pointer-events-none">
+                            公式リンク <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="goToOrganizerFormStep()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrow-left"></i> 修正する
+                    </button>
+                    <button type="submit" form="addOrganizerForm" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-paper-plane"></i> 実際に申請する
                     </button>
                 </div>
-
-                <!-- STEP 2: プレビュー画面・申請確定 -->
-                <div id="orgStepPreview" class="space-y-4 hidden">
-                    <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block"><i class="fa-solid fa-eye"></i> 表示プレビュー確認</span>
-                    
-                    <div id="previewCard" class="bg-slate-700/30 border border-emerald-500/30 p-4 rounded-xl flex flex-col justify-between hover:border-emerald-500/50 transition">
-                        <div class="flex gap-3 items-start">
-                            <div id="previewLogoContainer" class="shrink-0"></div>
-                            <div class="space-y-1 overflow-hidden">
-                                <h3 id="previewName" class="text-base font-bold text-white flex items-center gap-2"></h3>
-                                <p class="text-[10px] text-rose-400 font-semibold"><i class="fa-solid fa-map-location-dot"></i> <span id="previewLocation"></span></p>
-                                <p id="previewDesc" class="text-xs text-slate-300 leading-relaxed pt-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;"></p>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-600/30 flex justify-between items-center">
-                            <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                                <i class="fa-solid fa-expand mr-1"></i>カード詳細
-                            </span>
-                            <a id="previewLink" href="#" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 pointer-events-none">
-                                公式リンク <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 pt-2">
-                        <button type="button" onclick="goToOrganizerFormStep()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-arrow-left"></i> 修正する
-                        </button>
-                        <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-paper-plane"></i> 実際に申請する
-                        </button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -371,6 +379,14 @@
         let selectedOrganizerId = null;
         let calendar = null;
         let clickCount = 0; 
+
+        // 安全なSHA-256ハッシュ生成関数 (Web Crypto APIを使用)
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
@@ -694,7 +710,7 @@
             }
 
             const delBtn = document.getElementById('orgDetailDeleteBtn');
-            const showDelete = isAdmin || (org.telegram && org.telegram !== '-');
+            const showDelete = isAdmin || (org.deletePassword ? true : false);
             if (showDelete) {
                 delBtn.classList.remove('hidden');
                 delBtn.innerText = isAdmin ? "削除 (Admin)" : "削除";
@@ -720,7 +736,7 @@
                     ? `<img src="${org.logo}" alt="${org.name} Logo" class="w-12 h-12 rounded-full object-cover border border-slate-600 bg-slate-800 shrink-0">`
                     : `<div class="w-12 h-12 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0 select-none">${org.name.substring(0,2)}</div>`;
 
-                const showDelete = isAdmin || (org.telegram && org.telegram !== '-');
+                const showDelete = isAdmin || (org.deletePassword ? true : false);
 
                 return `
                     <div onclick="openOrganizerDetailModal('${org.id}')" class="bg-slate-700/40 border border-slate-600/50 p-4 rounded-xl flex flex-col justify-between hover:border-emerald-500/50 hover:bg-slate-700/60 cursor-pointer transition">
@@ -903,7 +919,8 @@
             }
 
             const delBtn = document.getElementById('adminDeleteBtn');
-            if (isAdmin || (props.telegram && props.telegram !== '-')) {
+            const hasPassword = props.deletePassword ? true : false;
+            if (isAdmin || hasPassword) {
                 delBtn.classList.remove('hidden');
                 delBtn.innerText = isAdmin ? "削除 (Admin)" : "削除";
             } else {
@@ -923,12 +940,12 @@
             const isRec = props.isRecurring;
 
             if (!isAdmin) {
-                const verification = prompt("本人確認のため、申請時の「Telegramユーザー名(@なし)」を入力してください:");
-                if (!verification) return;
+                const pass = prompt("本人確認のため、申請時に設定した「削除用パスワード」を入力してください:");
+                if (!pass) return;
 
-                const cleanTg = props.telegram.replace('@', '');
-                if (verification.trim().toLowerCase() !== cleanTg.trim().toLowerCase()) {
-                    alert("入力内容が一致しません。削除権限がありません。");
+                const hashedInput = await hashPassword(pass);
+                if (hashedInput !== props.deletePassword) {
+                    alert("パスワードが違います。削除権限がありません。");
                     return;
                 }
             }
@@ -979,6 +996,7 @@
             const host = document.getElementById('formHost').value;
             const user = document.getElementById('formUser').value;
             const link = document.getElementById('formLink').value;
+            const plainPassword = document.getElementById('formDeletePassword').value;
             
             let inputTelegram = document.getElementById('formTelegram').value.trim();
             if (inputTelegram.startsWith('@')) { inputTelegram = inputTelegram.substring(1); }
@@ -999,6 +1017,7 @@
             const autoApprove = isAdmin; 
             const now = new Date();
             const submitString = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            const hashedPassword = await hashPassword(plainPassword);
 
             let newEvent = {
                 id: String(Date.now()),
@@ -1006,6 +1025,7 @@
                     host: host, location: loc, link: link,
                     author: user,
                     telegram: telegram,
+                    deletePassword: hashedPassword,
                     status: autoApprove ? "approved" : "pending",
                     isNewLoc: isNewLoc, submittedAt: submitString,
                     exceptions: []
@@ -1073,8 +1093,11 @@
             const location = document.getElementById('orgFormLocation').value.trim();
             const desc = document.getElementById('orgFormDesc').value.trim();
             const link = document.getElementById('orgFormLink').value.trim();
+            const plainPassword = document.getElementById('orgFormDeletePassword').value;
 
             const autoApprove = isAdmin;
+            const hashedPassword = await hashPassword(plainPassword);
+
             const newOrg = {
                 id: 'org_' + Date.now(),
                 name,
@@ -1084,6 +1107,7 @@
                 location,
                 telegram,
                 author,
+                deletePassword: hashedPassword,
                 status: autoApprove ? "approved" : "pending"
             };
 
@@ -1324,12 +1348,12 @@
             if (!org) return;
 
             if (!isAdmin) {
-                const verification = prompt("本人確認のため、登録時の「Telegramユーザー名(アットマーク@なし)」を入力してください:");
-                if (!verification) return;
+                const pass = prompt("本人確認のため、登録時に設定した「削除用パスワード」を入力してください:");
+                if (!pass) return;
 
-                const cleanTg = org.telegram.replace('@', '');
-                if (verification.trim().toLowerCase() !== cleanTg.trim().toLowerCase()) {
-                    alert("入力内容が一致しません。削除権限がありません。");
+                const hashedInput = await hashPassword(pass);
+                if (hashedInput !== org.deletePassword) {
+                    alert("パスワードが違います。削除権限がありません。");
                     return;
                 }
             }
