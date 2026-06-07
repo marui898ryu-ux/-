@@ -884,7 +884,7 @@
             }
 
             const delBtn = document.getElementById('adminDeleteBtn');
-            if(isAdmin || (props.author && props.author !== 'Admin')) {
+            if (isAdmin || (props.telegram && props.telegram !== '-')) {
                 delBtn.classList.remove('hidden');
                 delBtn.innerText = isAdmin ? "削除 (Admin)" : "削除";
             } else {
@@ -908,7 +908,7 @@
                 if (!verification) return;
 
                 const cleanTg = props.telegram.replace('@', '');
-                if (verification !== cleanTg) {
+                if (verification.trim().toLowerCase() !== cleanTg.trim().toLowerCase()) {
                     alert("入力内容が一致しません。削除権限がありません。");
                     return;
                 }
