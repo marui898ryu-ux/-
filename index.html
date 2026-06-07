@@ -44,14 +44,6 @@
     </header>
 
     <main class="max-w-4xl mx-auto p-4">
-        <div class="mb-6 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl p-4 flex gap-3 items-start text-xs leading-relaxed">
-            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base mt-0.5 shrink-0"></i>
-            <div>
-                <strong class="text-amber-400 font-bold block mb-0.5">【免責事項・重要なお知らせ】</strong>
-                掲載されているスケジュールは、定期開催の基本情報および有志の申請を元に表示しています。グラウンドの都合、天候、主催者の急な事情により、予定が変更・中止となる場合があります。ご参加の際は**必ず事前に各主催者の公式リンク（Facebook等）から最新情報をご確認ください**。
-            </div>
-        </div>
-
         <div id="pendingSection" class="mb-6 bg-slate-800 border border-amber-500/50 rounded-xl p-4 hidden space-y-4">
             <div>
                 <h2 class="text-base font-bold text-amber-400 mb-3 flex items-center gap-2">
@@ -94,11 +86,20 @@
 
                 <div class="mt-8 pt-6 border-t border-slate-700/60 flex flex-col items-center text-center gap-3">
                     <h3 class="text-sm font-bold text-slate-200">あなたのコミュニティも一覧に掲載しませんか？</h3>
-                    <p class="text-xs text-slate-400 max-w-md">定期オープンプレーを行っている有志のグループやクラブチーム of 登録申請をお待ちしています。管理者の承認後に一覧へ掲載されます。</p>
+                    <p class="text-xs text-slate-400 max-w-md">定期オープンプレーを行っている有志のグループやクラブチームの登録申請をお待ちしています。管理者の承認後に一覧へ掲載されます。</p>
                     <button onclick="openOrganizerModalWithPreview()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-full transition shadow flex items-center gap-1.5 mt-1">
                         <i class="fa-solid fa-file-signature"></i> コミュニティの登録申請はこちら
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- 免責事項・最下部に移動 -->
+        <div class="mt-8 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl p-4 flex gap-3 items-start text-xs leading-relaxed">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base mt-0.5 shrink-0"></i>
+            <div>
+                <strong class="text-amber-400 font-bold block mb-0.5">【免責事項・重要なお知らせ】</strong>
+                掲載されているスケジュールは、定期開催の基本情報および有志の申請を元に表示しています。グラウンドの都合、天候、主催者の急な事情により、予定が変更・中止となる場合があります。ご参加の際は**必ず事前に各主催者の公式リンク（Facebook等）から最新情報をご確認ください**。
             </div>
         </div>
     </main>
