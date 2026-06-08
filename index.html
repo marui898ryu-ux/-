@@ -94,7 +94,6 @@
             </div>
         </div>
 
-        <!-- 免責事項・最下部に移動 -->
         <div class="mt-8 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl p-4 flex gap-3 items-start text-xs leading-relaxed">
             <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base mt-0.5 shrink-0"></i>
             <div>
@@ -170,7 +169,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1">ピッチ・詳細場所</label>
-                    <select id="formLocationSelect" onchange="toggleCustomLocation(this.value)" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 mb-1"></select>
+                    <select id="formLocationSelect" onchange="toggleCustomLocation(this.value, 'form')" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 mb-1"></select>
                     <input type="text" id="formLocationCustom" placeholder="新しいピッチ名を入力" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 hidden">
                 </div>
                 <div>
@@ -191,7 +190,7 @@
         </div>
     </div>
 
-    <!-- 主催者申請モーダル (ステップ遷移プレビュー付き) -->
+    <!-- 主催者申請モーダル -->
     <div id="addOrganizerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-20">
         <div class="bg-slate-800 w-full max-w-md rounded-xl p-5 border border-slate-700 max-h-[90vh] overflow-y-auto space-y-4">
             <div class="flex justify-between items-center pb-2 border-b border-slate-700/60">
@@ -200,7 +199,6 @@
             </div>
             
             <form id="addOrganizerForm" class="space-y-4" onsubmit="handleOrganizerFormSubmit(event)">
-                <!-- STEP 1: 入力フォーム -->
                 <div id="orgStepForm" class="space-y-3">
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">お名前（担当者名）</label>
@@ -227,7 +225,8 @@
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">主な開催場所</label>
-                        <input type="text" id="orgFormLocation" placeholder="例: Turf BGC, Circuit Makati" maxlength="50" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
+                        <select id="orgFormLocationSelect" onchange="toggleCustomLocation(this.value, 'org')" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 mb-1"></select>
+                        <input type="text" id="orgFormLocationCustom" placeholder="新しいピッチ名を入力" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 hidden">
                     </div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
@@ -246,7 +245,6 @@
                     </button>
                 </div>
 
-                <!-- STEP 2: プレビュー画面・申請確定 -->
                 <div id="orgStepPreview" class="space-y-4 hidden">
                     <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block"><i class="fa-solid fa-eye"></i> 表示プレビュー確認</span>
                     
@@ -343,7 +341,6 @@
         const MY_TELEGRAM_CHAT_ID = "5303710039"; 
         const TG_BOT_TOKEN = "8802205942:AAHmef91eZ_2RTXQIn0CC1k7u6UvntiGDjA";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "",
             authDomain: "",
@@ -381,7 +378,6 @@
         let calendar = null;
         let clickCount = 0; 
 
-        // 安全なSHA-256ハッシュ生成関数 (Web Crypto API + 非セキュア環境用JSフォールバック)
         async function hashPassword(password) {
             if (typeof crypto !== 'undefined' && crypto.subtle) {
                 try {
@@ -393,8 +389,6 @@
                     console.warn("Web Crypto API failed, falling back to custom JS hash", e);
                 }
             }
-            
-            // 非セキュア（file:///など）環境用フォールバック
             let hash = 5381;
             for (let i = 0; i < password.length; i++) {
                 hash = ((hash << 5) + hash) + password.charCodeAt(i);
@@ -639,7 +633,13 @@
         function updateOrganizerPreview() {
             const name = document.getElementById('orgFormName').value.trim() || "チーム名 / コミュニティ名";
             const logo = document.getElementById('orgFormLogo').value.trim();
-            const location = document.getElementById('orgFormLocation').value.trim() || "主な開催場所";
+            
+            let location = document.getElementById('orgFormLocationSelect').value;
+            if (location === '__custom__') {
+                location = document.getElementById('orgFormLocationCustom').value.trim();
+            }
+            if (!location) location = "主な開催場所";
+
             const desc = document.getElementById('orgFormDesc').value.trim() || "簡単な紹介説明文がここに表示されます。";
             const link = document.getElementById('orgFormLink').value.trim() || "#";
 
@@ -680,6 +680,7 @@
             document.getElementById('addOrganizerForm').reset();
             document.getElementById('orgDescCount').innerText = "0 / 200 文字";
             document.getElementById('orgDescCount').className = "text-[10px] text-slate-500 font-semibold";
+            updateLocationSelect();
             goToOrganizerFormStep(); 
             openModal('addOrganizerModal');
         }
@@ -839,6 +840,12 @@
                     }
                 }
 
+                for (let org of organizers) {
+                    if (org.location === oldName) {
+                        await updateOrganizerDoc(org.id, { location: trimmedName });
+                    }
+                }
+
                 await saveLocations();
                 alert("場所名を更新しました。");
             }
@@ -880,22 +887,29 @@
         }
 
         function updateLocationSelect() {
-            const select = document.getElementById('formLocationSelect');
-            if(!select) return;
-            select.innerHTML = '<option value="">-- 登録済みの場所から選択 --</option>';
-            locations.forEach(loc => { select.innerHTML += `<option value="${loc}">${loc}</option>`; });
-            select.innerHTML += '<option value="__custom__">+ 新しい場所を入力する</option>';
-            toggleCustomLocation("");
+            const selects = [
+                { select: document.getElementById('formLocationSelect'), prefix: 'form' },
+                { select: document.getElementById('orgFormLocationSelect'), prefix: 'org' }
+            ];
+
+            selects.forEach(item => {
+                if(!item.select) return;
+                item.select.innerHTML = '<option value="">-- 登録済みの場所から選択 --</option>';
+                locations.forEach(loc => { item.select.innerHTML += `<option value="${loc}">${loc}</option>`; });
+                item.select.innerHTML += '<option value="__custom__">+ 新しい場所を入力する</option>';
+                toggleCustomLocation(item.select.value, item.prefix);
+            });
         }
 
-        function toggleCustomLocation(val) {
-            const customInput = document.getElementById('formLocationCustom');
+        function toggleCustomLocation(val, prefix) {
+            const customInput = document.getElementById(prefix === 'org' ? 'orgFormLocationCustom' : 'formLocationCustom');
             if(!customInput) return;
             if(val === '__custom__') {
                 customInput.classList.remove('hidden'); customInput.required = true;
             } else {
                 customInput.classList.add('hidden'); customInput.required = false;
             }
+            if (prefix === 'org') updateOrganizerPreview();
         }
 
         function openDetailModal(calEvent) {
@@ -1105,7 +1119,19 @@
             
             const name = document.getElementById('orgFormName').value.trim();
             const logo = document.getElementById('orgFormLogo').value.trim();
-            const location = document.getElementById('orgFormLocation').value.trim();
+            
+            let location = document.getElementById('orgFormLocationSelect').value;
+            let isNewLoc = false;
+            if (location === '__custom__') {
+                location = document.getElementById('orgFormLocationCustom').value.trim();
+                isNewLoc = true;
+            }
+
+            if (!location) {
+                alert("主な開催場所を選択または入力してください。");
+                return;
+            }
+
             const desc = document.getElementById('orgFormDesc').value.trim();
             const link = document.getElementById('orgFormLink').value.trim();
             const plainPassword = document.getElementById('orgFormDeletePassword').value;
@@ -1123,12 +1149,17 @@
                 telegram,
                 author,
                 deletePassword: hashedPassword,
-                status: autoApprove ? "approved" : "pending"
+                status: autoApprove ? "approved" : "pending",
+                isNewLoc: isNewLoc
             };
 
             await writeOrganizer(newOrg);
 
             if (autoApprove) {
+                if(isNewLoc && !locations.includes(location)) {
+                    locations.push(location);
+                    await saveLocations();
+                }
                 alert("コミュニティ情報を登録しました。");
             } else {
                 const messageText = `⚽【新着：コミュニティ登録申請】\n━━━━━━━━━━━━━━\n👤 申請者: ${telegram} (${author})\n🏆 チーム名: ${name}\n📍 主な場所: ${location}\n📝 説明: ${desc}\n🔗 リンク: ${link}\n━━━━━━━━━━━━━━\n※管理画面から承認を行ってください。`;
@@ -1148,7 +1179,6 @@
         }
 
         function updatePendingList() {
-            // 1. スケジュール承認待ち
             const pendingEvents = events.filter(e => e.extendedProps && e.extendedProps.status === 'pending');
             const pendingCountEl = document.getElementById('pendingCount');
             if (pendingCountEl) pendingCountEl.innerText = pendingEvents.length;
@@ -1230,7 +1260,6 @@
                 }
             }
 
-            // 2. 主催者コミュニティ承認待ち
             const pendingOrgs = organizers.filter(org => org.status === 'pending');
             const pendingOrgCountEl = document.getElementById('pendingOrganizerCount');
             if (pendingOrgCountEl) pendingOrgCountEl.innerText = pendingOrgs.length;
@@ -1277,7 +1306,6 @@
                                         <p class="text-slate-200 mt-0.5">${org.desc}</p>
                                     </div>
                                     
-                                    <!-- アドミン承認用のライブプレビューカード -->
                                     <div class="space-y-1.5 sm:col-span-2 border-t border-slate-700/40 pt-3 mt-1">
                                         <p class="text-[10px] text-emerald-400 font-bold tracking-wider uppercase flex items-center gap-1">
                                             <i class="fa-solid fa-eye"></i> 掲載時のカード表示プレビュー
@@ -1347,8 +1375,16 @@
         }
 
         async function approveOrganizer(id) {
-            await updateOrganizerDoc(id, { status: "approved" });
-            alert("主催者登録を承認しました。");
+            const idx = organizers.findIndex(o => o.id === id);
+            if (idx !== -1) {
+                const loc = organizers[idx].location;
+                if (organizers[idx].isNewLoc && !locations.includes(loc)) {
+                    locations.push(loc);
+                    await saveLocations();
+                }
+                await updateOrganizerDoc(id, { status: "approved" });
+                alert("主催者登録を承認しました。");
+            }
         }
 
         async function rejectOrganizer(id) {
