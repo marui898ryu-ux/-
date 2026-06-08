@@ -399,10 +399,17 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
+            const isMobile = window.innerWidth < 768;
+
             calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
+                initialView: isMobile ? 'listMonth' : 'dayGridMonth',
                 locale: 'ja',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
+                headerToolbar: { 
+                    left: 'prev,next today', 
+                    center: 'title', 
+                    right: isMobile ? 'listMonth,dayGridMonth' : 'dayGridMonth,listMonth' 
+                },
+                dayMaxEvents: true,
                 events: function(info, successCallback, failureCallback) {
                     const approved = events.filter(e => e.extendedProps && e.extendedProps.status === 'approved');
                     successCallback(approved);
@@ -421,6 +428,20 @@
             });
             calendar.render();
             
+            // Auto-switch calendar view dynamically on screen resize
+            window.addEventListener('resize', function() {
+                if (calendar) {
+                    const isMobileNow = window.innerWidth < 768;
+                    const currentView = calendar.view.type;
+                    if (isMobileNow && currentView === 'dayGridMonth') {
+                        calendar.changeView('listMonth');
+                    } else if (!isMobileNow && currentView === 'listMonth') {
+                        calendar.changeView('dayGridMonth');
+                    }
+                    calendar.updateSize();
+                }
+            });
+
             generateTimeOptions();
             setDefaultInputs();
             initSyncBackend();
@@ -434,6 +455,14 @@
                 try {
                     firebase.initializeApp(firebaseConfig);
                     db = firebase.firestore();
+                    
+                    // Force HTTP long-polling to prevent websocket connection freezes in iOS Safari / Mobile browsers
+                    db.settings({
+                        experimentalForceLongPolling: true,
+                        experimentalAutoDetectLongPolling: false,
+                        merge: true
+                    });
+
                     isCloudMode = true;
                     statusEl.innerHTML = `<span class="text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> クラウド同期モード</span>`;
                     overlay.classList.remove('hidden');
@@ -449,27 +478,27 @@
 
         function setupLocalStorageFallback() {
             isCloudMode = false;
-            document.getElementById('syncStatus').innerHTML = `<span class="text-amber-400 flex items-center gap-1"><i class="fa-solid fa-hard-drive"></i> ローカルブラウザ保存モード</span>`;
+            document.getElementById('syncStatus').innerHTML = `<span class="text-amber-400 flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> ローカル保存（※PC・スマホ間は同期されません）</span>`;
             
             try {
                 events = JSON.parse(localStorage.getItem('soccer_events_v10'));
-                if (!Array.isArray(events)) events = defaultEvents;
+                if (!Array.isArray(events)) events = JSON.parse(JSON.stringify(defaultEvents));
             } catch(e) {
-                events = defaultEvents;
+                events = JSON.parse(JSON.stringify(defaultEvents));
             }
 
             try {
                 locations = JSON.parse(localStorage.getItem('soccer_locations_v10'));
-                if (!Array.isArray(locations)) locations = defaultLocations;
+                if (!Array.isArray(locations)) locations = JSON.parse(JSON.stringify(defaultLocations));
             } catch(e) {
-                locations = defaultLocations;
+                locations = JSON.parse(JSON.stringify(defaultLocations));
             }
 
             try {
                 organizers = JSON.parse(localStorage.getItem('soccer_organizers_v10'));
-                if (!Array.isArray(organizers)) organizers = defaultOrganizers;
+                if (!Array.isArray(organizers)) organizers = JSON.parse(JSON.stringify(defaultOrganizers));
             } catch(e) {
-                organizers = defaultOrganizers;
+                organizers = JSON.parse(JSON.stringify(defaultOrganizers));
             }
             
             refreshUIs();
@@ -506,14 +535,17 @@
                 });
                 renderOrganizers();
                 updatePendingList();
+            }, err => {
+                console.error("主催者同期エラー:", err);
             });
         }
 
         async function writeEvent(eventData) {
             if (isCloudMode) {
                 const docId = eventData.id;
-                delete eventData.id;
-                await db.collection("events").doc(docId).set(eventData);
+                const copyData = JSON.parse(JSON.stringify(eventData));
+                delete copyData.id;
+                await db.collection("events").doc(docId).set(copyData);
             } else {
                 events.push({ id: eventData.id, ...eventData });
                 saveLocalData();
@@ -569,8 +601,9 @@
         async function writeOrganizer(orgData) {
             if (isCloudMode) {
                 const docId = orgData.id;
-                delete orgData.id;
-                await db.collection("organizers").doc(docId).set(orgData);
+                const copyData = JSON.parse(JSON.stringify(orgData));
+                delete copyData.id;
+                await db.collection("organizers").doc(docId).set(copyData);
             } else {
                 organizers.push(orgData);
                 saveLocalData();
@@ -617,9 +650,13 @@
         }
 
         function saveLocalData() {
-            localStorage.setItem('soccer_events_v10', JSON.stringify(events));
-            localStorage.setItem('soccer_locations_v10', JSON.stringify(locations));
-            localStorage.setItem('soccer_organizers_v10', JSON.stringify(organizers));
+            try {
+                localStorage.setItem('soccer_events_v10', JSON.stringify(events));
+                localStorage.setItem('soccer_locations_v10', JSON.stringify(locations));
+                localStorage.setItem('soccer_organizers_v10', JSON.stringify(organizers));
+            } catch (e) {
+                console.warn("ローカルストレージへの書き込みが制限されているか、容量を超過しています:", e);
+            }
         }
 
         function refreshUIs() {
