@@ -94,7 +94,7 @@
             </div>
         </div>
 
-        <!-- 免責事項・最下部に移動 -->
+        <!-- 免責事項・最下部 -->
         <div class="mt-8 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl p-4 flex gap-3 items-start text-xs leading-relaxed">
             <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base mt-0.5 shrink-0"></i>
             <div>
@@ -222,12 +222,14 @@
                         <input type="text" id="orgFormName" placeholder="例: BGC FC" maxlength="30" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">ロゴ画像URL (任意)</label>
-                        <input type="url" id="orgFormLogo" placeholder="https://example.com/logo.jpg" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1">ロゴ画像 (スマホ内の写真・またはカメラ撮影)</label>
+                        <input type="file" id="orgFormLogoFile" accept="image/*" onchange="handleLogoFileSelect(event)" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1 text-xs text-slate-300 focus:outline-none focus:border-emerald-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-500">
+                        <input type="hidden" id="orgFormLogoBase64">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-400 mb-1">主な開催場所</label>
-                        <input type="text" id="orgFormLocation" placeholder="例: Turf BGC, Circuit Makati" maxlength="50" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
+                        <select id="orgFormLocationSelect" onchange="toggleOrgCustomLocation(this.value)" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 mb-1" required></select>
+                        <input type="text" id="orgFormLocationCustom" placeholder="新しいピッチ名を入力" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 hidden">
                     </div>
                     <div>
                         <div class="flex justify-between items-center mb-1">
@@ -240,10 +242,6 @@
                         <label class="block text-xs font-semibold text-slate-400 mb-1">連絡先・公式リンクURL (Facebookなど)</label>
                         <input type="url" id="orgFormLink" placeholder="https://facebook.com/..." class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
                     </div>
-                    
-                    <button type="button" onclick="goToOrganizerPreviewStep()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-2 mt-4">
-                        <i class="fa-solid fa-magnifying-glass"></i> プレビューを確認する
-                    </button>
                 </div>
 
                 <!-- STEP 2: プレビュー画面・申請確定 -->
@@ -330,7 +328,7 @@
                 </div>
             </div>
             <div class="pt-2 flex gap-2">
-                <a id="orgDetailLink" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                <a id="orgDetailLink" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
                     <i class="fa-brands fa-facebook"></i> 公式・詳細リンクを開く
                 </a>
                 <button id="orgDetailDeleteBtn" onclick="handleOrganizerDeleteFromModal()" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white px-3 rounded-lg text-xs font-bold hidden">削除</button>
@@ -354,16 +352,16 @@
         };
 
         const defaultEvents = [
-            { id: "1", title: "BGC FC (Turf BGC)", start: "2026-06-08T20:00:00", end: "2026-06-08T22:00:00", extendedProps: { host: "BGC FC", location: "Turf BGC", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: false, exceptions: [] }},
-            { id: "2", title: "Cavite UT (Vermosa)", start: "2026-06-13T08:00:00", end: "2026-06-13T10:00:00", extendedProps: { host: "Cavite UT", location: "Vermosa Sports Hub", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: false, exceptions: [] }},
-            { id: "rec_1", daysOfWeek: [1], startTime: "20:00:00", endTime: "22:00:00", title: "【定期】BGC FC オープンプレー", color: "#047857", extendedProps: { host: "BGC FC", location: "Turf BGC", link: "https://facebook.com/bgcfc", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: true, exceptions: [] }},
-            { id: "rec_2", daysOfWeek: [6], startTime: "08:00:00", endTime: "10:00:00", title: "【定期】Cavite UT 朝活サッカー", color: "#047857", extendedProps: { host: "Cavite UT", location: "Vermosa Sports Hub", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: true, exceptions: [] }}
+            { id: "1", title: "BGC FC (Turf BGC)", start: "2026-06-08T20:00:00", end: "2026-06-08T22:00:00", extendedProps: { host: "BGC FC", location: "Turf BGC", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", deletePassword: "", submittedAt: "-", isRecurring: false, exceptions: [] }},
+            { id: "2", title: "Cavite UT (Vermosa)", start: "2026-06-13T08:00:00", end: "2026-06-13T10:00:00", extendedProps: { host: "Cavite UT", location: "Vermosa Sports Hub", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", deletePassword: "", submittedAt: "-", isRecurring: false, exceptions: [] }},
+            { id: "rec_1", daysOfWeek: [1], startTime: "20:00:00", endTime: "22:00:00", title: "【定期】BGC FC オープンプレー", color: "#047857", extendedProps: { host: "BGC FC", location: "Turf BGC", link: "https://facebook.com/bgcfc", author: "Admin", telegram: "-", status: "approved", deletePassword: "", submittedAt: "-", isRecurring: true, exceptions: [] }},
+            { id: "rec_2", daysOfWeek: [6], startTime: "08:00:00", endTime: "10:00:00", title: "【定期】Cavite UT 朝活サッカー", color: "#047857", extendedProps: { host: "Cavite UT", location: "Vermosa Sports Hub", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", deletePassword: "", submittedAt: "-", isRecurring: true, exceptions: [] }}
         ];
 
         const defaultOrganizers = [
-            { id: "org_1", name: "BGC FC", desc: "毎週月曜の夜を中心に活動するBGCエリアトップクラスのコミュニティ。初心者から経験者まで幅広く楽しめます。", location: "Turf BGC", link: "https://facebook.com/bgcfc", logo: "", telegram: "-", status: "approved", author: "Admin" },
-            { id: "org_2", name: "Cavite UT", desc: "カヴィテのVermosaエリアを中心に毎週末朝活オープンプレーを主宰。クリーンでフレンドリーな環境です。", location: "Vermosa Sports Hub", link: "https://facebook.com", logo: "", telegram: "-", status: "approved", author: "Admin" },
-            { id: "org_3", name: "Manila Footy Club", desc: "マニラ近郊の複数のピッチで平日・週末問わずマッチメイクを企画しているアクティブなグループ。", location: "Circuit Makati, McKinley Hill", link: "https://facebook.com", logo: "", telegram: "-", status: "approved", author: "Admin" }
+            { id: "org_1", name: "BGC FC", desc: "毎週月曜の夜を中心に活動するBGCエリアトップクラスのコミュニティ。初心者から経験者まで幅広く楽しめます。", location: "Turf BGC", link: "https://facebook.com/bgcfc", logo: "", telegram: "-", status: "approved", deletePassword: "", author: "Admin" },
+            { id: "org_2", name: "Cavite UT", desc: "カヴィテのVermosaエリアを中心に毎週末朝活オープンプレーを主宰。クリーンでフレンドリーな環境です。", location: "Vermosa Sports Hub", link: "https://facebook.com", logo: "", telegram: "-", status: "approved", deletePassword: "", author: "Admin" },
+            { id: "org_3", name: "Manila Footy Club", desc: "マニラ近郊の複数のピッチで平日・週末問わずマッチメイクを企画しているアクティブなグループ。", location: "McKinley Hill Stadium", link: "https://facebook.com", logo: "", telegram: "-", status: "approved", deletePassword: "", author: "Admin" }
         ];
 
         const defaultLocations = ["Turf BGC", "Vermosa Sports Hub", "McKinley Hill Stadium", "Circuit Makati"];
@@ -380,6 +378,8 @@
         let selectedOrganizerId = null;
         let calendar = null;
         let clickCount = 0; 
+        let clickTimer = null;
+        let uploadedLogoBase64 = "";
 
         // 安全なSHA-256ハッシュ生成関数 (Web Crypto API + 非セキュア環境用JSフォールバック)
         async function hashPassword(password) {
@@ -403,34 +403,25 @@
             return "js_" + Math.abs(hash).toString(16);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const calendarEl = document.getElementById('calendar');
-            calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'ja',
-                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
-                events: function(info, successCallback, failureCallback) {
-                    const approved = events.filter(e => e.extendedProps && e.extendedProps.status === 'approved');
-                    successCallback(approved);
-                },
-                eventDidMount: function(info) {
-                    const exceptions = info.event.extendedProps.exceptions || [];
-                    const eventDate = FullCalendar.formatDate(info.event.start, {
-                        year: 'numeric', month: '2-digit', day: '2-digit'
-                    }).replace(/\//g, '-');
+        function handleLogoFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-                    if (exceptions.includes(eventDate)) {
-                        info.el.style.display = 'none';
-                    }
-                },
-                eventClick: function(info) { openDetailModal(info.event); }
-            });
-            calendar.render();
-            
-            generateTimeOptions();
-            setDefaultInputs();
-            initSyncBackend();
-        });
+            // データベース容量のために300KB以下に制限
+            if (file.size > 300 * 1024) {
+                alert("画像のファイルサイズが大きすぎます。300KB以下の画像を選択してください。");
+                e.target.value = "";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                uploadedLogoBase64 = event.target.result;
+                document.getElementById('orgFormLogoBase64').value = uploadedLogoBase64;
+                updateOrganizerPreview();
+            };
+            reader.readAsDataURL(file);
+        }
 
         function initSyncBackend() {
             const statusEl = document.getElementById('syncStatus');
@@ -638,10 +629,17 @@
 
         function updateOrganizerPreview() {
             const name = document.getElementById('orgFormName').value.trim() || "チーム名 / コミュニティ名";
-            const logo = document.getElementById('orgFormLogo').value.trim();
-            const location = document.getElementById('orgFormLocation').value.trim() || "主な開催場所";
+            const logo = document.getElementById('orgFormLogoBase64').value.trim();
             const desc = document.getElementById('orgFormDesc').value.trim() || "簡単な紹介説明文がここに表示されます。";
             const link = document.getElementById('orgFormLink').value.trim() || "#";
+
+            let location = "";
+            const selectVal = document.getElementById('orgFormLocationSelect').value;
+            if (selectVal === '__custom__') {
+                location = document.getElementById('orgFormLocationCustom').value.trim() || "新規ピッチ名";
+            } else {
+                location = selectVal || "主な開催場所";
+            }
 
             document.getElementById('previewName').innerText = name;
             document.getElementById('previewLocation').innerText = location;
@@ -678,6 +676,8 @@
 
         function openOrganizerModalWithPreview() {
             document.getElementById('addOrganizerForm').reset();
+            document.getElementById('orgFormLogoBase64').value = "";
+            uploadedLogoBase64 = "";
             document.getElementById('orgDescCount').innerText = "0 / 200 文字";
             document.getElementById('orgDescCount').className = "text-[10px] text-slate-500 font-semibold";
             goToOrganizerFormStep(); 
@@ -783,6 +783,9 @@
 
         function handleSecretClick() {
             clickCount++;
+            if (clickTimer) clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => { clickCount = 0; }, 3000); 
+
             if (clickCount === 3) {
                 clickCount = 0; 
                 const pass = prompt("管理者パスワードを入力してください:");
@@ -800,7 +803,6 @@
                     alert("パスワードが違います");
                 }
             }
-            setTimeout(() => { clickCount = 0; }, 2000);
         }
 
         function renderLocationManager() {
@@ -881,11 +883,22 @@
 
         function updateLocationSelect() {
             const select = document.getElementById('formLocationSelect');
-            if(!select) return;
+            const orgSelect = document.getElementById('orgFormLocationSelect');
+            if(!select || !orgSelect) return;
+
             select.innerHTML = '<option value="">-- 登録済みの場所から選択 --</option>';
-            locations.forEach(loc => { select.innerHTML += `<option value="${loc}">${loc}</option>`; });
+            orgSelect.innerHTML = '<option value="">-- 登録済みの場所から選択 --</option>';
+
+            locations.forEach(loc => { 
+                select.innerHTML += `<option value="${loc}">${loc}</option>`; 
+                orgSelect.innerHTML += `<option value="${loc}">${loc}</option>`; 
+            });
+
             select.innerHTML += '<option value="__custom__">+ 新しい場所を入力する</option>';
+            orgSelect.innerHTML += '<option value="__custom__">+ 新しい場所を入力する</option>';
+
             toggleCustomLocation("");
+            toggleOrgCustomLocation("");
         }
 
         function toggleCustomLocation(val) {
@@ -896,6 +909,17 @@
             } else {
                 customInput.classList.add('hidden'); customInput.required = false;
             }
+        }
+
+        function toggleOrgCustomLocation(val) {
+            const customInput = document.getElementById('orgFormLocationCustom');
+            if(!customInput) return;
+            if(val === '__custom__') {
+                customInput.classList.remove('hidden'); customInput.required = true;
+            } else {
+                customInput.classList.add('hidden'); customInput.required = false;
+            }
+            updateOrganizerPreview();
         }
 
         function openDetailModal(calEvent) {
@@ -1104,11 +1128,25 @@
             const telegram = inputTelegram ? `@${inputTelegram}` : '-';
             
             const name = document.getElementById('orgFormName').value.trim();
-            const logo = document.getElementById('orgFormLogo').value.trim();
-            const location = document.getElementById('orgFormLocation').value.trim();
+            const logo = document.getElementById('orgFormLogoBase64').value.trim();
             const desc = document.getElementById('orgFormDesc').value.trim();
             const link = document.getElementById('orgFormLink').value.trim();
             const plainPassword = document.getElementById('orgFormDeletePassword').value;
+
+            let location = "";
+            const selectVal = document.getElementById('orgFormLocationSelect').value;
+            let isNewLoc = false;
+            if (selectVal === '__custom__') {
+                location = document.getElementById('orgFormLocationCustom').value.trim();
+                isNewLoc = true;
+            } else {
+                location = selectVal;
+            }
+
+            if (!location) {
+                alert("主な開催場所を選択または入力してください。");
+                return;
+            }
 
             const autoApprove = isAdmin;
             const hashedPassword = await hashPassword(plainPassword);
@@ -1129,6 +1167,10 @@
             await writeOrganizer(newOrg);
 
             if (autoApprove) {
+                if(isNewLoc && !locations.includes(location)) { 
+                    locations.push(location);
+                    await saveLocations();
+                }
                 alert("コミュニティ情報を登録しました。");
             } else {
                 const messageText = `⚽【新着：コミュニティ登録申請】\n━━━━━━━━━━━━━━\n👤 申請者: ${telegram} (${author})\n🏆 チーム名: ${name}\n📍 主な場所: ${location}\n📝 説明: ${desc}\n🔗 リンク: ${link}\n━━━━━━━━━━━━━━\n※管理画面から承認を行ってください。`;
@@ -1270,7 +1312,7 @@
                                     ${org.logo ? `
                                     <div class="sm:col-span-2">
                                         <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">🖼️ ロゴURL</p>
-                                        <p class="text-slate-400 mt-0.5 truncate select-all">${org.logo}</p>
+                                        <p class="text-slate-400 mt-0.5 truncate select-all text-xs">${org.logo.substring(0, 100)}...</p>
                                     </div>` : ''}
                                     <div class="sm:col-span-2 border-t border-slate-700/40 my-0.5 pt-2">
                                         <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">📝 簡単な説明</p>
@@ -1348,6 +1390,14 @@
 
         async function approveOrganizer(id) {
             await updateOrganizerDoc(id, { status: "approved" });
+            const idx = organizers.findIndex(o => o.id === id);
+            if (idx !== -1) {
+                const loc = organizers[idx].location;
+                if (loc && !locations.includes(loc)) {
+                    locations.push(loc);
+                    await saveLocations();
+                }
+            }
             alert("主催者登録を承認しました。");
         }
 
