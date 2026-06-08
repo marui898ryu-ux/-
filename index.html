@@ -43,6 +43,12 @@
         </div>
     </header>
 
+    <!-- 同期未設定時の警告バー (PCとスマホのデータが同期しない仕様を明示) -->
+    <div id="localSyncWarning" class="bg-amber-500 text-slate-900 text-xs font-bold px-4 py-2.5 text-center flex items-center justify-center gap-2 hidden shadow-inner">
+        <i class="fa-solid fa-triangle-exclamation text-sm shrink-0"></i> 
+        <span>【データ同期未設定】Firebase(クラウド)が設定されていないため、PCとスマホ間でデータは同期されません（各端末内にのみ保存されます）。</span>
+    </div>
+
     <main class="max-w-4xl mx-auto p-4">
         <div id="pendingSection" class="mb-6 bg-slate-800 border border-amber-500/50 rounded-xl p-4 hidden space-y-4">
             <div>
@@ -378,6 +384,11 @@
         let calendar = null;
         let clickCount = 0; 
 
+        // Active Firestore Unsubscribe functions
+        let unsubscribeEvents = null;
+        let unsubscribeLocations = null;
+        let unsubscribeOrganizers = null;
+
         async function hashPassword(password) {
             if (typeof crypto !== 'undefined' && crypto.subtle) {
                 try {
@@ -442,6 +453,23 @@
                 }
             });
 
+            // Mobile Visibility Restore Sync (iOS / Smartphone wake reconnect fix)
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    if (isCloudMode && db) {
+                        console.log("Tab resumed: Re-subscribing to Firestore to get latest updates.");
+                        startRealtimeSync();
+                    } else {
+                        // If local mode, re-fetch from storage in case other tabs wrote updates
+                        setupLocalStorageFallback();
+                    }
+                    if (calendar) {
+                        calendar.refetchEvents();
+                        calendar.updateSize();
+                    }
+                }
+            });
+
             generateTimeOptions();
             setDefaultInputs();
             initSyncBackend();
@@ -465,6 +493,7 @@
 
                     isCloudMode = true;
                     statusEl.innerHTML = `<span class="text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> クラウド同期モード</span>`;
+                    document.getElementById('localSyncWarning').classList.add('hidden');
                     overlay.classList.remove('hidden');
                     startRealtimeSync();
                 } catch (err) {
@@ -478,8 +507,11 @@
 
         function setupLocalStorageFallback() {
             isCloudMode = false;
-            document.getElementById('syncStatus').innerHTML = `<span class="text-amber-400 flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> ローカル保存（※PC・スマホ間は同期されません）</span>`;
+            document.getElementById('syncStatus').innerHTML = `<span class="text-amber-400 flex items-center gap-1"><i class="fa-solid fa-triangle-exclamation"></i> ローカル保存モード</span>`;
             
+            // Show warnings explaining that syncing between different devices is disabled without firebase config
+            document.getElementById('localSyncWarning').classList.remove('hidden');
+
             try {
                 events = JSON.parse(localStorage.getItem('soccer_events_v10'));
                 if (!Array.isArray(events)) events = JSON.parse(JSON.stringify(defaultEvents));
@@ -504,8 +536,16 @@
             refreshUIs();
         }
 
+        function stopRealtimeSync() {
+            if (unsubscribeEvents) { unsubscribeEvents(); unsubscribeEvents = null; }
+            if (unsubscribeLocations) { unsubscribeLocations(); unsubscribeLocations = null; }
+            if (unsubscribeOrganizers) { unsubscribeOrganizers(); unsubscribeOrganizers = null; }
+        }
+
         function startRealtimeSync() {
-            db.collection("events").onSnapshot(snapshot => {
+            stopRealtimeSync();
+
+            unsubscribeEvents = db.collection("events").onSnapshot(snapshot => {
                 events = [];
                 snapshot.forEach(doc => {
                     events.push({ id: doc.id, ...doc.data() });
@@ -517,7 +557,7 @@
                 setupLocalStorageFallback();
             });
 
-            db.collection("locations").doc("meta").onSnapshot(doc => {
+            unsubscribeLocations = db.collection("locations").doc("meta").onSnapshot(doc => {
                 if (doc.exists) {
                     locations = doc.data().list || [];
                 } else {
@@ -528,7 +568,7 @@
                 renderLocationManager();
             });
 
-            db.collection("organizers").onSnapshot(snapshot => {
+            unsubscribeOrganizers = db.collection("organizers").onSnapshot(snapshot => {
                 organizers = [];
                 snapshot.forEach(doc => {
                     organizers.push({ id: doc.id, ...doc.data() });
