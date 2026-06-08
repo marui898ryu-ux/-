@@ -21,24 +21,50 @@
         .fc-button-primary { background-color: #059669 !important; border-color: #059669 !important; }
         .fc-button-primary:hover { background-color: #047857 !important; }
         .fc-button-active { background-color: #047857 !important; }
+
+        @media (max-width: 640px) {
+            .fc-toolbar {
+                flex-direction: column !important;
+                gap: 0.5rem;
+                align-items: stretch !important;
+            }
+            .fc-toolbar-title {
+                font-size: 1.05rem !important;
+                text-align: center;
+            }
+            .fc-button {
+                padding: 0.25rem 0.5rem !important;
+                font-size: 0.75rem !important;
+            }
+            .fc-view-harness {
+                height: auto !important;
+                min-height: 290px;
+            }
+            .fc-list-event-title {
+                font-size: 0.75rem !important;
+            }
+            .fc-list-event-time {
+                font-size: 0.75rem !important;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
 
-    <header class="bg-emerald-600 p-4 sticky top-0 shadow-lg z-10 flex flex-col sm:flex-row justify-between items-center gap-3">
-        <div class="flex flex-col items-center sm:items-start gap-1">
-            <h1 id="secretAdminTrigger" onclick="handleSecretClick()" class="text-xl font-bold flex items-center gap-2 cursor-pointer select-none">
-                <i class="fa-solid fa-futbol"></i> PH Open Play <span id="adminIndicator" class="text-xs bg-slate-900/50 px-2 py-0.5 rounded-full text-emerald-300 hidden">Admin</span>
+    <header class="bg-emerald-600 p-2 sm:p-4 sticky top-0 shadow-lg z-10 flex justify-between items-center gap-2">
+        <div class="flex flex-col items-start gap-0.5">
+            <h1 id="secretAdminTrigger" onclick="handleSecretClick()" class="text-base sm:text-xl font-bold flex items-center gap-1.5 cursor-pointer select-none">
+                <i class="fa-solid fa-futbol text-sm sm:text-base"></i> PH Open Play <span id="adminIndicator" class="text-xs bg-slate-900/50 px-2 py-0.5 rounded-full text-emerald-300 hidden">Admin</span>
             </h1>
-            <div id="syncStatus" class="text-[10px] font-semibold"></div>
+            <div id="syncStatus" class="text-[9px] font-semibold opacity-90"></div>
         </div>
-        <div class="flex items-center gap-3">
-            <nav class="flex bg-emerald-700/50 p-1 rounded-lg text-xs font-semibold">
-                <button onclick="switchView('calendar')" id="tab-calendar" class="px-3 py-1.5 rounded-md bg-slate-900 text-white transition">カレンダー</button>
-                <button onclick="switchView('organizers')" id="tab-organizers" class="px-3 py-1.5 rounded-md text-emerald-100 hover:text-white transition">主催者一覧</button>
+        <div class="flex items-center gap-2">
+            <nav class="flex bg-emerald-700/50 p-0.5 rounded-lg text-[10px] sm:text-xs font-semibold">
+                <button onclick="switchView('calendar')" id="tab-calendar" class="px-2.5 py-1.5 rounded-md bg-slate-900 text-white transition">カレンダー</button>
+                <button onclick="switchView('organizers')" id="tab-organizers" class="px-2.5 py-1.5 rounded-md text-emerald-100 hover:text-white transition">主催者一覧</button>
             </nav>
-            <button onclick="openModal('addModal')" class="bg-white text-emerald-600 px-3 py-1.5 rounded-full text-xs font-semibold shadow flex items-center gap-1 hover:bg-emerald-50">
-                <i class="fa-solid fa-plus"></i> スケジュール追加
+            <button onclick="openModal('addModal')" class="bg-white text-emerald-600 px-2.5 py-1.5 rounded-full text-[10px] sm:text-xs font-bold shadow flex items-center gap-1 hover:bg-emerald-50 shrink-0">
+                <i class="fa-solid fa-plus text-[9px]"></i> スケジュール追加
             </button>
         </div>
     </header>
@@ -49,7 +75,7 @@
         <span>【データ同期未設定】Firebase(クラウド)が設定されていないため、PCとスマホ間でデータは同期されません（各端末内にのみ保存されます）。</span>
     </div>
 
-    <main class="max-w-4xl mx-auto p-4">
+    <main class="max-w-4xl mx-auto p-2 sm:p-4">
         <div id="pendingSection" class="mb-6 bg-slate-800 border border-amber-500/50 rounded-xl p-4 hidden space-y-4">
             <div>
                 <h2 class="text-base font-bold text-amber-400 mb-3 flex items-center gap-2">
@@ -65,12 +91,15 @@
             </div>
         </div>
 
-        <div id="view-calendar" class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl relative">
+        <div id="view-calendar" class="bg-slate-800 p-2.5 sm:p-4 rounded-xl border border-slate-700 shadow-xl relative">
             <div id="loadingOverlay" class="absolute inset-0 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center gap-3 z-10 hidden">
                 <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-500"></i>
                 <p class="text-xs text-slate-300">データをクラウドから同期中...</p>
             </div>
             <div id="calendar"></div>
+            
+            <!-- 今日の予定・明日の予定リスト表示セクション -->
+            <div id="todayTomorrowSchedule" class="mt-4"></div>
         </div>
 
         <div id="view-organizers" class="hidden space-y-4">
@@ -716,6 +745,7 @@
             renderOrganizers();
             updateLocationSelect();
             renderLocationManager();
+            renderTodayTomorrowSchedule();
         }
 
         function handleLogoFileSelect(input) {
@@ -1089,6 +1119,205 @@
             }
 
             openModal('detailModal');
+        }
+
+        function openDetailModalFromTodayTomorrow(id, dateLabel) {
+            if (calendar) {
+                const calEv = calendar.getEventById(id);
+                if (calEv) {
+                    openDetailModal(calEv);
+                    return;
+                }
+            }
+            
+            const rawEv = events.find(e => e.id === id);
+            if (!rawEv) return;
+
+            let startTime = "";
+            let endTime = "";
+            let targetDateStr = "";
+
+            const isRec = rawEv.extendedProps.isRecurring;
+            if (isRec) {
+                const today = new Date();
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const todayStr = getLocalDateString(today);
+                const tomorrowStr = getLocalDateString(tomorrow);
+                
+                targetDateStr = dateLabel.includes(formatMD(today)) ? todayStr : tomorrowStr;
+                startTime = rawEv.startTime.substring(0, 5);
+                endTime = rawEv.endTime.substring(0, 5);
+            } else {
+                targetDateStr = rawEv.start.split('T')[0];
+                startTime = rawEv.start.split('T')[1].substring(0, 5);
+                endTime = rawEv.end.split('T')[1].substring(0, 5);
+            }
+
+            selectedEventId = rawEv.id;
+            selectedEventDate = targetDateStr;
+
+            const props = rawEv.extendedProps;
+            document.getElementById('detailHost').innerText = props.host || '';
+            document.getElementById('detailLocation').innerText = props.location || '';
+            document.getElementById('detailAuthor').innerText = props.author || '';
+            document.getElementById('detailDate').innerText = targetDateStr;
+            document.getElementById('detailTime').innerText = `${startTime} ～ ${endTime}`;
+
+            const tgContainer = document.getElementById('detailTelegramContainer');
+            if (isAdmin && props.telegram && props.telegram !== '-') {
+                document.getElementById('detailTelegram').innerText = props.telegram;
+                tgContainer.classList.remove('hidden');
+            } else {
+                tgContainer.classList.add('hidden');
+            }
+
+            const fbLink = document.getElementById('detailFbLink');
+            if(props.link) { fbLink.href = props.link; fbLink.classList.remove('hidden'); }
+            else { fbLink.classList.add('hidden'); }
+
+            if(props.submittedAt && props.submittedAt !== '-') {
+                document.getElementById('detailSubmittedAt').innerText = props.submittedAt;
+                document.getElementById('detailSubmittedAtContainer').classList.remove('hidden');
+            } else {
+                document.getElementById('detailSubmittedAtContainer').classList.add('hidden');
+            }
+
+            const delBtn = document.getElementById('adminDeleteBtn');
+            const hasPassword = props.deletePassword ? true : false;
+            if (isAdmin || hasPassword) {
+                delBtn.classList.remove('hidden');
+                delBtn.innerText = isAdmin ? "削除 (Admin)" : "削除";
+            } else {
+                delBtn.classList.add('hidden');
+            }
+
+            openModal('detailModal');
+        }
+
+        function renderTodayTomorrowSchedule() {
+            const container = document.getElementById('todayTomorrowSchedule');
+            if (!container) return;
+
+            const today = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            const todayStr = getLocalDateString(today);
+            const tomorrowStr = getLocalDateString(tomorrow);
+
+            const approvedEvents = events.filter(e => e.extendedProps && e.extendedProps.status === 'approved');
+
+            function getEventsForDate(dateStr, dateObj) {
+                const dateEvents = [];
+                const dayOfWeek = dateObj.getDay();
+
+                approvedEvents.forEach(e => {
+                    const isRec = e.extendedProps.isRecurring;
+                    const exceptions = e.extendedProps.exceptions || [];
+                    if (exceptions.includes(dateStr)) return;
+
+                    if (isRec) {
+                        if (e.daysOfWeek && e.daysOfWeek.includes(dayOfWeek)) {
+                            dateEvents.push({
+                                id: e.id,
+                                startTime: e.startTime.substring(0, 5),
+                                endTime: e.endTime.substring(0, 5),
+                                location: e.extendedProps.location,
+                                host: e.extendedProps.host,
+                                link: e.extendedProps.link
+                            });
+                        }
+                    } else {
+                        const eDateStr = e.start.split('T')[0];
+                        if (eDateStr === dateStr) {
+                            const startT = e.start.split('T')[1].substring(0, 5);
+                            const endT = e.end.split('T')[1].substring(0, 5);
+                            dateEvents.push({
+                                id: e.id,
+                                startTime: startT,
+                                endTime: endT,
+                                location: e.extendedProps.location,
+                                host: e.extendedProps.host,
+                                link: e.extendedProps.link
+                            });
+                        }
+                    }
+                });
+
+                dateEvents.sort((a, b) => a.startTime.localeCompare(b.startTime));
+                return dateEvents;
+            }
+
+            const todayList = getEventsForDate(todayStr, today);
+            const tomorrowList = getEventsForDate(tomorrowStr, tomorrow);
+
+            const todayLabel = formatMD(today);
+            const tomorrowLabel = formatMD(tomorrow);
+
+            function buildListHtml(list, title, labelColor, dateLabel) {
+                let sectionHtml = `
+                    <div class="bg-slate-900/30 border border-slate-700/50 rounded-xl p-3 flex-1">
+                        <h3 class="text-xs font-bold text-slate-300 flex items-center gap-1.5 mb-2.5 pb-2 border-b border-slate-700/50">
+                            <span class="w-2 h-2 rounded-full ${labelColor}"></span>
+                            ${title} <span class="text-[10px] font-normal text-slate-500 font-mono ml-0.5">${dateLabel}</span>
+                        </h3>
+                `;
+
+                if (list.length === 0) {
+                    sectionHtml += `
+                        <div class="text-xs text-slate-500 py-6 text-center select-none">
+                            予定されているオープンプレーはありません
+                        </div>
+                    `;
+                } else {
+                    sectionHtml += `<div class="space-y-2">`;
+                    list.forEach(item => {
+                        sectionHtml += `
+                            <div onclick="openDetailModalFromTodayTomorrow('${item.id}', '${dateLabel}')" class="bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 p-2.5 rounded-lg flex items-center justify-between gap-3 cursor-pointer transition">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-bold text-slate-200 flex items-center gap-1 truncate">
+                                        <i class="fa-solid fa-futbol text-emerald-500 text-[10px]"></i> ${item.host}
+                                    </p>
+                                    <p class="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+                                        <i class="fa-solid fa-location-dot text-rose-500 text-[9px]"></i> <span class="truncate">${item.location}</span>
+                                    </p>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <p class="text-xs font-bold text-emerald-400 font-mono">${item.startTime} - ${item.endTime}</p>
+                                    <span class="text-[9px] text-slate-500 hover:text-emerald-400 mt-1 inline-flex items-center gap-0.5">
+                                        詳細を確認 <i class="fa-solid fa-angle-right text-[8px]"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    sectionHtml += `</div>`;
+                }
+                sectionHtml += `</div>`;
+                return sectionHtml;
+            }
+
+            container.innerHTML = `
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-slate-700/60 mt-4">
+                    ${buildListHtml(todayList, "今日の予定", "bg-emerald-500", todayLabel)}
+                    ${buildListHtml(tomorrowList, "明日の予定", "bg-amber-500", tomorrowLabel)}
+                </div>
+            `;
+        }
+
+        function getLocalDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatMD(date) {
+            const m = date.getMonth() + 1;
+            const d = date.getDate();
+            const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+            return `${m}/${d}(${dayNames[date.getDay()]})`;
         }
 
         async function handleDelete() {
