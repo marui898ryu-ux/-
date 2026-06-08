@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- FullCalendar JS Bundle (V6 auto-injects styles) -->
+    <!-- FullCalendar JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
     
     <!-- Firebase SDK (Compat Version) -->
@@ -21,6 +21,7 @@
         .fc-button-primary { background-color: #059669 !important; border-color: #059669 !important; }
         .fc-button-primary:hover { background-color: #047857 !important; }
         .fc-button-active { background-color: #047857 !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
@@ -44,6 +45,7 @@
     </header>
 
     <main class="max-w-4xl mx-auto p-4">
+        <!-- 管理者用承認セクション -->
         <div id="pendingSection" class="mb-6 bg-slate-800 border border-amber-500/50 rounded-xl p-4 hidden space-y-4">
             <div>
                 <h2 class="text-base font-bold text-amber-400 mb-3 flex items-center gap-2">
@@ -53,12 +55,13 @@
             </div>
             <div id="pendingOrganizerSection" class="border-t border-slate-700/60 pt-4">
                 <h2 class="text-base font-bold text-amber-400 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-users-gear"></i> 承認待ちの主催者・チーム申請 (<span id="pendingOrganizerCount">0</span>)
+                    <i class="fa-solid fa-users-gear"></i> 承認待ちの主催者申請 (<span id="pendingOrganizerCount">0</span>)
                 </h2>
                 <div id="pendingOrganizerList" class="space-y-3"></div>
             </div>
         </div>
 
+        <!-- カレンダー表示 -->
         <div id="view-calendar" class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-xl relative">
             <div id="loadingOverlay" class="absolute inset-0 bg-slate-900/80 rounded-xl flex flex-col items-center justify-center gap-3 z-10 hidden">
                 <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-500"></i>
@@ -67,26 +70,21 @@
             <div id="calendar"></div>
         </div>
 
+        <!-- 主催者一覧表示 -->
         <div id="view-organizers" class="hidden space-y-4">
             <div id="adminLocationManager" class="hidden bg-slate-800 p-5 rounded-xl border border-rose-500/30 shadow-xl mb-6">
                 <h2 class="text-lg font-bold text-rose-400 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-map-location-dot"></i> 登録済みの場所の管理 (Admin)
                 </h2>
-                <p class="text-xs text-slate-400 mb-4">場所の名前をクリックして修正、または「x」で削除できます。修正すると既存のスケジュールも更新されます。</p>
                 <div id="location-admin-list" class="flex flex-wrap gap-2"></div>
             </div>
 
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl">
                 <h2 class="text-lg font-bold text-emerald-400 mb-2 flex items-center gap-2">
-                    <i class="fa-solid fa-users"></i> オープンプレー主催者・コミュニティ一覧
+                    <i class="fa-solid fa-users"></i> オープンプレー主催者一覧
                 </h2>
-                <p class="text-xs text-slate-400 mb-6">定期的にオープンプレーやマッチメイクを行っているコミュニティです。最新アナウンスは、各グループの公式ページをご確認ください。</p>
-                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="organizers-list"></div>
-
                 <div class="mt-8 pt-6 border-t border-slate-700/60 flex flex-col items-center text-center gap-3">
-                    <h3 class="text-sm font-bold text-slate-200">あなたのコミュニティも一覧に掲載しませんか？</h3>
-                    <p class="text-xs text-slate-400 max-w-md">定期オープンプレーを行っている有志のグループやクラブチームの登録申請をお待ちしています。管理者の承認後に一覧へ掲載されます。</p>
                     <button onclick="openOrganizerModalWithPreview()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-full transition shadow flex items-center gap-1.5 mt-1">
                         <i class="fa-solid fa-file-signature"></i> コミュニティの登録申請はこちら
                     </button>
@@ -97,8 +95,8 @@
         <div class="mt-8 bg-amber-500/10 border border-amber-500/30 text-amber-200 rounded-xl p-4 flex gap-3 items-start text-xs leading-relaxed">
             <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base mt-0.5 shrink-0"></i>
             <div>
-                <strong class="text-amber-400 font-bold block mb-0.5">【免責事項・重要なお知らせ】</strong>
-                掲載されているスケジュールは、定期開催の基本情報および有志の申請を元に表示しています。グラウンドの都合、天候、主催者の急な事情により、予定が変更・中止となる場合があります。ご参加の際は**必ず事前に各主催者の公式リンク（Facebook等）から最新情報をご確認ください**。
+                <strong class="text-amber-400 font-bold block mb-0.5">【免責事項】</strong>
+                掲載情報は有志の申請に基づきます。天候や主催者の都合により変更される場合があるため、必ず事前に公式リンクから最新情報をご確認ください。
             </div>
         </div>
     </main>
@@ -111,176 +109,77 @@
                 <button onclick="closeModal('addModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="addForm" class="space-y-3" onsubmit="handleFormSubmit(event)">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">お名前（またはニックネーム）</label>
-                    <input type="text" id="formUser" placeholder="あなたの名前" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
+                <input type="text" id="formUser" placeholder="お名前" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none" required>
+                <div class="flex rounded border border-slate-600 bg-slate-700 overflow-hidden focus-within:border-emerald-500">
+                    <span class="bg-slate-600 text-slate-300 px-3 py-1.5 text-sm flex items-center">@</span>
+                    <input type="text" id="formTelegram" placeholder="Telegramユーザー名" class="w-full bg-transparent px-2 py-1.5 text-sm outline-none" required>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">あなたの Telegram ユーザー名</label>
-                    <div class="flex rounded border border-slate-600 bg-slate-700 overflow-hidden focus-within:border-emerald-500">
-                        <span class="bg-slate-600 text-slate-300 px-3 py-1.5 text-sm flex items-center justify-center font-semibold select-none">@</span>
-                        <input type="text" id="formTelegram" placeholder="username" class="w-full bg-transparent px-2 py-1.5 text-sm focus:outline-none text-slate-100" required>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">削除用パスワード (半角英数4桁以上)</label>
-                    <input type="password" id="formDeletePassword" placeholder="パスワードを設定（数字4桁など）" maxlength="16" minlength="4" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
+                <input type="password" id="formDeletePassword" placeholder="削除用パスワード (4桁以上)" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none" required>
+                
+                <div class="flex gap-4 text-sm py-1">
+                    <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="scheduleType" value="solo" checked onchange="toggleScheduleTypeField('solo')" class="accent-emerald-500"> 単発</label>
+                    <label class="flex items-center gap-1.5 cursor-pointer"><input type="radio" name="scheduleType" value="recurring" onchange="toggleScheduleTypeField('recurring')" class="accent-emerald-500"> 毎週</label>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">開催タイプ</label>
-                    <div class="flex gap-4 text-sm mt-1">
-                        <label class="flex items-center gap-1.5 cursor-pointer">
-                            <input type="radio" name="scheduleType" value="solo" checked onchange="toggleScheduleTypeField('solo')" class="accent-emerald-500"> 単発イベント
-                        </label>
-                        <label class="flex items-center gap-1.5 cursor-pointer">
-                            <input type="radio" name="scheduleType" value="recurring" onchange="toggleScheduleTypeField('recurring')" class="accent-emerald-500"> 定期開催 (毎週)
-                        </label>
-                    </div>
-                </div>
-
-                <div id="field-solo-date">
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">日付</label>
-                    <input type="date" id="formDate" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
-                </div>
-
-                <div id="field-recurring-days" class="hidden bg-slate-900/40 p-3 rounded-lg border border-slate-700">
-                    <label class="block text-xs font-semibold text-slate-400 mb-1.5 text-emerald-400">開催する曜日 (複数選択可)</label>
-                    <div class="grid grid-cols-4 gap-2 text-xs">
-                        <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="1" class="accent-emerald-500"> 月</label>
-                        <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="2" class="accent-emerald-500"> 火</label>
-                        <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="3" class="accent-emerald-500"> 水</label>
-                        <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="4" class="accent-emerald-500"> 木</label>
-                        <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="5" class="accent-emerald-500"> 金</label>
-                        <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="6" class="accent-emerald-500"> 土</label>
-                        <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="0" class="accent-emerald-500"> 日</label>
-                    </div>
+                <div id="field-solo-date"><input type="date" id="formDate" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none"></div>
+                <div id="field-recurring-days" class="hidden grid grid-cols-4 gap-2 text-xs bg-slate-900/40 p-3 rounded-lg border border-slate-700">
+                    <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="1"> 月</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="2"> 火</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="3"> 水</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="4"> 木</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="5"> 金</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="6"> 土</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" name="formDays" value="0"> 日</label>
                 </div>
 
                 <div class="flex gap-2">
-                    <div class="flex-1">
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">開始時間</label>
-                        <select id="formStart" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required></select>
-                    </div>
-                    <div class="flex-1">
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">終了時間</label>
-                        <select id="formEnd" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required></select>
-                    </div>
+                    <select id="formStart" class="flex-1 bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required></select>
+                    <select id="formEnd" class="flex-1 bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required></select>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">ピッチ・詳細場所</label>
-                    <select id="formLocationSelect" onchange="toggleCustomLocation(this.value, 'form')" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 mb-1"></select>
-                    <input type="text" id="formLocationCustom" placeholder="新しいピッチ名を入力" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 hidden">
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ピッチ・詳細場所</label>
+                    <select id="formLocationSelect" onchange="toggleCustomLocation(this.value, 'form')" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none mb-1"></select>
+                    <input type="text" id="formLocationCustom" placeholder="新しいピッチ名を入力" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none hidden">
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">主催者 / グループ名</label>
-                    <input type="text" id="formHost" placeholder="例: BGC Football Club" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-400 mb-1">Facebook リンクURL</label>
-                    <input type="url" id="formLink" placeholder="https://facebook.com/..." class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
-                </div>
-                <div class="bg-slate-700/50 p-2 rounded text-xs text-amber-400">
-                    ※申請後、管理者が内容を確認してカレンダーに反映します。
-                </div>
-                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-2">
-                    <i class="fa-solid fa-paper-plane"></i> スケジュールを申請する
-                </button>
+
+                <input type="text" id="formHost" placeholder="主催者 / グループ名" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none" required>
+                <input type="url" id="formLink" placeholder="Facebook リンクURL" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none" required>
+                
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded shadow transition">スケジュールを申請する</button>
             </form>
         </div>
     </div>
 
     <!-- 主催者申請モーダル -->
     <div id="addOrganizerModal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-20">
-        <div class="bg-slate-800 w-full max-w-md rounded-xl p-5 border border-slate-700 max-h-[90vh] overflow-y-auto space-y-4">
-            <div class="flex justify-between items-center pb-2 border-b border-slate-700/60">
-                <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-users-rectangle text-emerald-500"></i> 主催者登録の申請</h3>
+        <div class="bg-slate-800 w-full max-w-md rounded-xl p-5 border border-slate-700 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold">主催者登録の申請</h3>
                 <button onclick="closeModal('addOrganizerModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-            
-            <form id="addOrganizerForm" class="space-y-4" onsubmit="handleOrganizerFormSubmit(event)">
-                <div id="orgStepForm" class="space-y-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">お名前（担当者名）</label>
-                        <input type="text" id="orgFormUser" maxlength="20" placeholder="担当者のニックネームなど" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">Telegram ユーザー名</label>
-                        <div class="flex rounded border border-slate-600 bg-slate-700 overflow-hidden focus-within:border-emerald-500">
-                            <span class="bg-slate-600 text-slate-300 px-3 py-1.5 text-sm flex items-center justify-center font-semibold select-none">@</span>
-                            <input type="text" id="orgFormTelegram" maxlength="30" placeholder="username" class="w-full bg-transparent px-2 py-1.5 text-sm focus:outline-none text-slate-100" required>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">削除用パスワード (半角英数4桁以上)</label>
-                        <input type="password" id="orgFormDeletePassword" placeholder="パスワードを設定（数字4桁など）" maxlength="16" minlength="4" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">チーム名 / コミュニティ名</label>
-                        <input type="text" id="orgFormName" placeholder="例: BGC FC" maxlength="30" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">ロゴ画像URL (任意)</label>
-                        <input type="url" id="orgFormLogo" placeholder="https://example.com/logo.jpg" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">主な開催場所</label>
-                        <select id="orgFormLocationSelect" onchange="toggleCustomLocation(this.value, 'org')" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 mb-1"></select>
-                        <input type="text" id="orgFormLocationCustom" placeholder="新しいピッチ名を入力" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500 hidden">
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="block text-xs font-semibold text-slate-400">簡単な説明</label>
-                            <span id="orgDescCount" class="text-[10px] text-slate-500 font-semibold">0 / 200 文字</span>
-                        </div>
-                        <textarea id="orgFormDesc" rows="3" maxlength="200" oninput="handleOrgDescInput()" placeholder="初心者歓迎、毎週末午前中に活動、などの情報（最大200文字）" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">連絡先・公式リンクURL (Facebookなど)</label>
-                        <input type="url" id="orgFormLink" placeholder="https://facebook.com/..." class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required>
-                    </div>
-                    
-                    <button type="button" onclick="goToOrganizerPreviewStep()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-2 mt-4">
-                        <i class="fa-solid fa-magnifying-glass"></i> プレビューを確認する
-                    </button>
+            <form id="addOrganizerForm" class="space-y-3" onsubmit="handleOrganizerFormSubmit(event)">
+                <input type="text" id="orgFormUser" placeholder="担当者名" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required>
+                <input type="text" id="orgFormTelegram" placeholder="Telegram (@不要)" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required>
+                <input type="password" id="orgFormDeletePassword" placeholder="削除用パスワード" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required>
+                <input type="text" id="orgFormName" placeholder="チーム名 / コミュニティ名" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required>
+                <input type="url" id="orgFormLogo" placeholder="ロゴ画像URL (任意)" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none">
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">主な開催場所</label>
+                    <select id="orgFormLocationSelect" onchange="toggleCustomLocation(this.value, 'org')" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none mb-1"></select>
+                    <input type="text" id="orgFormLocationCustom" placeholder="新しい場所を入力" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:border-emerald-500 outline-none hidden">
                 </div>
 
-                <div id="orgStepPreview" class="space-y-4 hidden">
-                    <span class="text-[10px] text-emerald-400 font-bold uppercase tracking-wider block"><i class="fa-solid fa-eye"></i> 表示プレビュー確認</span>
-                    
-                    <div id="previewCard" class="bg-slate-700/30 border border-emerald-500/30 p-4 rounded-xl flex flex-col justify-between hover:border-emerald-500/50 transition">
-                        <div class="flex gap-3 items-start">
-                            <div id="previewLogoContainer" class="shrink-0"></div>
-                            <div class="space-y-1 overflow-hidden">
-                                <h3 id="previewName" class="text-base font-bold text-white flex items-center gap-2"></h3>
-                                <p class="text-[10px] text-rose-400 font-semibold"><i class="fa-solid fa-map-location-dot"></i> <span id="previewLocation"></span></p>
-                                <p id="previewDesc" class="text-xs text-slate-300 leading-relaxed pt-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;"></p>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-600/30 flex justify-between items-center">
-                            <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                                <i class="fa-solid fa-expand mr-1"></i>カード詳細
-                            </span>
-                            <a id="previewLink" href="#" target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 pointer-events-none">
-                                公式リンク <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                            </a>
-                        </div>
-                    </div>
-
-                    <div class="flex gap-2 pt-2">
-                        <button type="button" onclick="goToOrganizerFormStep()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-arrow-left"></i> 修正する
-                        </button>
-                        <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-1.5">
-                            <i class="fa-solid fa-paper-plane"></i> 実際に申請する
-                        </button>
-                    </div>
-                </div>
+                <textarea id="orgFormDesc" rows="3" placeholder="紹介文 (初心者歓迎など)" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required></textarea>
+                <input type="url" id="orgFormLink" placeholder="公式リンクURL" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm outline-none" required>
+                
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded shadow transition">主催者登録を申請する</button>
             </form>
         </div>
     </div>
 
-    <!-- カレンダー詳細モーダル -->
+    <!-- 詳細モーダル -->
     <div id="detailModal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-20">
         <div class="bg-slate-800 w-full max-w-sm rounded-xl p-5 border border-slate-700">
             <div class="flex justify-between items-center mb-3">
@@ -292,46 +191,10 @@
                 <p><i class="fa-regular fa-clock mr-2 text-slate-400"></i><span id="detailTime"></span></p>
                 <p><i class="fa-solid fa-location-dot mr-2 text-rose-500"></i><span id="detailLocation"></span></p>
                 <p class="text-xs text-slate-400"><i class="fa-solid fa-user mr-2"></i>情報提供: <span id="detailAuthor"></span></p>
-                <p id="detailTelegramContainer" class="text-xs text-sky-400 hidden"><i class="fa-brands fa-telegram mr-2"></i>Telegram: <span id="detailTelegram"></span></p>
-                <p id="detailSubmittedAtContainer" class="text-xs text-slate-500 hidden"><i class="fa-regular fa-clock mr-2"></i>申請日時: <span id="detailSubmittedAt"></span></p>
             </div>
             <div class="flex gap-2">
-                <a id="detailFbLink" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
-                    <i class="fa-brands fa-facebook"></i> 公式・詳細リンクを開く
-                </a>
+                <a id="detailFbLink" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2 rounded-lg text-xs font-bold">公式リンクを開く</a>
                 <button id="adminDeleteBtn" onclick="handleDelete()" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white px-3 rounded-lg text-xs font-bold hidden">削除</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 主催者詳細ポップアップモーダル -->
-    <div id="organizerDetailModal" class="fixed inset-0 bg-black/70 flex items-center justify-center p-4 hidden z-20">
-        <div class="bg-slate-800 w-full max-w-sm rounded-xl p-5 border border-slate-700 space-y-4">
-            <div class="flex justify-between items-start pb-2 border-b border-slate-700/60">
-                <div class="flex items-center gap-3">
-                    <div id="orgDetailLogoContainer"></div>
-                    <div>
-                        <h3 class="text-base font-bold text-emerald-400" id="orgDetailName"></h3>
-                        <p class="text-[11px] text-slate-400" id="orgDetailAuthorContainer"><i class="fa-solid fa-user mr-1 text-[10px]"></i>管理者: <span id="orgDetailAuthor"></span></p>
-                    </div>
-                </div>
-                <button onclick="closeModal('organizerDetailModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="space-y-3 text-sm">
-                <div>
-                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5"><i class="fa-solid fa-map-location-dot mr-1"></i> 主な開催場所</span>
-                    <p class="text-slate-100 font-semibold" id="orgDetailLocation"></p>
-                </div>
-                <div>
-                    <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-0.5"><i class="fa-solid fa-circle-info mr-1"></i> 紹介説明文</span>
-                    <p class="text-slate-300 leading-relaxed text-xs bg-slate-900/40 p-3 rounded-lg border border-slate-700/50 select-text whitespace-pre-line max-h-40 overflow-y-auto break-all" id="orgDetailDesc"></p>
-                </div>
-            </div>
-            <div class="pt-2 flex gap-2">
-                <a id="orgDetailLink" href="#" target="_blank" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition">
-                    <i class="fa-brands fa-facebook"></i> 公式・詳細リンクを開く
-                </a>
-                <button id="orgDetailDeleteBtn" onclick="handleOrganizerDeleteFromModal()" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white px-3 rounded-lg text-xs font-bold hidden">削除</button>
             </div>
         </div>
     </div>
@@ -341,6 +204,7 @@
         const MY_TELEGRAM_CHAT_ID = "5303710039"; 
         const TG_BOT_TOKEN = "8802205942:AAHmef91eZ_2RTXQIn0CC1k7u6UvntiGDjA";
 
+        // ※ PCとスマホで同期するには、必ず有効なFirebase設定を入力してください
         const firebaseConfig = {
             apiKey: "",
             authDomain: "",
@@ -350,1116 +214,379 @@
             appId: ""
         };
 
-        const defaultEvents = [
-            { id: "1", title: "BGC FC (Turf BGC)", start: "2026-06-08T20:00:00", end: "2026-06-08T22:00:00", extendedProps: { host: "BGC FC", location: "Turf BGC", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: false, exceptions: [] }},
-            { id: "2", title: "Cavite UT (Vermosa)", start: "2026-06-13T08:00:00", end: "2026-06-13T10:00:00", extendedProps: { host: "Cavite UT", location: "Vermosa Sports Hub", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: false, exceptions: [] }},
-            { id: "rec_1", daysOfWeek: [1], startTime: "20:00:00", endTime: "22:00:00", title: "【定期】BGC FC オープンプレー", color: "#047857", extendedProps: { host: "BGC FC", location: "Turf BGC", link: "https://facebook.com/bgcfc", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: true, exceptions: [] }},
-            { id: "rec_2", daysOfWeek: [6], startTime: "08:00:00", endTime: "10:00:00", title: "【定期】Cavite UT 朝活サッカー", color: "#047857", extendedProps: { host: "Cavite UT", location: "Vermosa Sports Hub", link: "https://facebook.com", author: "Admin", telegram: "-", status: "approved", submittedAt: "-", isRecurring: true, exceptions: [] }}
-        ];
+        let events = [], locations = [], organizers = [];
+        let db = null, isCloudMode = false, isAdmin = false, calendar = null;
+        let selectedEventId = null, selectedEventDate = null, clickCount = 0;
 
-        const defaultOrganizers = [
-            { id: "org_1", name: "BGC FC", desc: "毎週月曜の夜を中心に活動するBGCエリアトップクラスのコミュニティ。初心者から経験者まで幅広く楽しめます。", location: "Turf BGC", link: "https://facebook.com/bgcfc", logo: "", telegram: "-", status: "approved", author: "Admin" },
-            { id: "org_2", name: "Cavite UT", desc: "カヴィテのVermosaエリアを中心に毎週末朝活オープンプレーを主宰。クリーンでフレンドリーな環境です。", location: "Vermosa Sports Hub", link: "https://facebook.com", logo: "", telegram: "-", status: "approved", author: "Admin" },
-            { id: "org_3", name: "Manila Footy Club", desc: "マニラ近郊の複数のピッチで平日・週末問わずマッチメイクを企画しているアクティブなグループ。", location: "Circuit Makati, McKinley Hill", link: "https://facebook.com", logo: "", telegram: "-", status: "approved", author: "Admin" }
-        ];
-
-        const defaultLocations = ["Turf BGC", "Vermosa Sports Hub", "McKinley Hill Stadium", "Circuit Makati"];
-
-        let events = [];
-        let locations = [];
-        let organizers = [];
-        
-        let db = null;
-        let isCloudMode = false;
-        let isAdmin = false;
-        let selectedEventId = null;
-        let selectedEventDate = null; 
-        let selectedOrganizerId = null;
-        let calendar = null;
-        let clickCount = 0; 
-
-        async function hashPassword(password) {
-            if (typeof crypto !== 'undefined' && crypto.subtle) {
-                try {
-                    const encoder = new TextEncoder();
-                    const data = encoder.encode(password);
-                    const hash = await crypto.subtle.digest('SHA-256', data);
-                    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-                } catch (e) {
-                    console.warn("Web Crypto API failed, falling back to custom JS hash", e);
-                }
-            }
-            let hash = 5381;
-            for (let i = 0; i < password.length; i++) {
-                hash = ((hash << 5) + hash) + password.charCodeAt(i);
-                hash = hash & hash;
-            }
-            return "js_" + Math.abs(hash).toString(16);
+        async function hashPassword(p) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(p);
+            const hash = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
             const calendarEl = document.getElementById('calendar');
             calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'ja',
                 headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
-                events: function(info, successCallback, failureCallback) {
-                    const approved = events.filter(e => e.extendedProps && e.extendedProps.status === 'approved');
-                    successCallback(approved);
+                events: (info, success) => success(events.filter(e => e.extendedProps?.status === 'approved')),
+                eventDidMount: (info) => {
+                    const ex = info.event.extendedProps.exceptions || [];
+                    const d = FullCalendar.formatDate(info.event.start, {year:'numeric', month:'2-digit', day:'2-digit'}).replace(/\//g, '-');
+                    if (ex.includes(d)) info.el.style.display = 'none';
                 },
-                eventDidMount: function(info) {
-                    const exceptions = info.event.extendedProps.exceptions || [];
-                    const eventDate = FullCalendar.formatDate(info.event.start, {
-                        year: 'numeric', month: '2-digit', day: '2-digit'
-                    }).replace(/\//g, '-');
-
-                    if (exceptions.includes(eventDate)) {
-                        info.el.style.display = 'none';
-                    }
-                },
-                eventClick: function(info) { openDetailModal(info.event); }
+                eventClick: (info) => openDetailModal(info.event)
             });
             calendar.render();
-            
             generateTimeOptions();
-            setDefaultInputs();
             initSyncBackend();
         });
 
         function initSyncBackend() {
             const statusEl = document.getElementById('syncStatus');
-            const overlay = document.getElementById('loadingOverlay');
-
-            if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.projectId) {
+            if (firebaseConfig.apiKey && firebaseConfig.projectId) {
                 try {
                     firebase.initializeApp(firebaseConfig);
                     db = firebase.firestore();
                     isCloudMode = true;
-                    statusEl.innerHTML = `<span class="text-emerald-400 flex items-center gap-1"><i class="fa-solid fa-cloud-arrow-up"></i> クラウド同期モード</span>`;
-                    overlay.classList.remove('hidden');
+                    statusEl.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-cloud"></i> クラウド同期モード</span>`;
                     startRealtimeSync();
-                } catch (err) {
-                    console.error("Firebaseの初期化に失敗しました。ローカル保存へフォールバックします。", err);
-                    setupLocalStorageFallback();
+                } catch (e) {
+                    console.error(e);
+                    fallbackToLocal();
                 }
             } else {
-                setupLocalStorageFallback();
+                fallbackToLocal();
             }
         }
 
-        function setupLocalStorageFallback() {
+        function fallbackToLocal() {
             isCloudMode = false;
-            document.getElementById('syncStatus').innerHTML = `<span class="text-amber-400 flex items-center gap-1"><i class="fa-solid fa-hard-drive"></i> ローカルブラウザ保存モード</span>`;
-            
-            try {
-                events = JSON.parse(localStorage.getItem('soccer_events_v10'));
-                if (!Array.isArray(events)) events = defaultEvents;
-            } catch(e) {
-                events = defaultEvents;
-            }
-
-            try {
-                locations = JSON.parse(localStorage.getItem('soccer_locations_v10'));
-                if (!Array.isArray(locations)) locations = defaultLocations;
-            } catch(e) {
-                locations = defaultLocations;
-            }
-
-            try {
-                organizers = JSON.parse(localStorage.getItem('soccer_organizers_v10'));
-                if (!Array.isArray(organizers)) organizers = defaultOrganizers;
-            } catch(e) {
-                organizers = defaultOrganizers;
-            }
-            
-            refreshUIs();
+            document.getElementById('syncStatus').innerHTML = `<span class="text-amber-400"><i class="fa-solid fa-hard-drive"></i> ローカル保存モード (同期不可)</span>`;
+            loadLocalData();
         }
 
         function startRealtimeSync() {
-            db.collection("events").onSnapshot(snapshot => {
-                events = [];
-                snapshot.forEach(doc => {
-                    events.push({ id: doc.id, ...doc.data() });
-                });
-                refreshUIs();
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+            
+            db.collection("events").onSnapshot(s => {
+                events = s.docs.map(d => ({id: d.id, ...d.data()}));
+                if (calendar) calendar.refetchEvents();
+                updatePendingList();
                 document.getElementById('loadingOverlay').classList.add('hidden');
-            }, err => {
-                console.error("イベント同期エラー:", err);
-                setupLocalStorageFallback();
             });
 
-            db.collection("locations").doc("meta").onSnapshot(doc => {
-                if (doc.exists) {
-                    locations = doc.data().list || [];
-                } else {
-                    locations = defaultLocations;
-                    db.collection("locations").doc("meta").set({ list: defaultLocations });
-                }
+            db.collection("locations").doc("meta").onSnapshot(d => {
+                locations = d.exists ? d.data().list : ["Turf BGC", "Circuit Makati", "McKinley Hill"];
                 updateLocationSelect();
                 renderLocationManager();
             });
 
-            db.collection("organizers").onSnapshot(snapshot => {
-                organizers = [];
-                snapshot.forEach(doc => {
-                    organizers.push({ id: doc.id, ...doc.data() });
-                });
+            db.collection("organizers").onSnapshot(s => {
+                organizers = s.docs.map(d => ({id: d.id, ...d.data()}));
                 renderOrganizers();
                 updatePendingList();
             });
         }
 
-        async function writeEvent(eventData) {
-            if (isCloudMode) {
-                const docId = eventData.id;
-                delete eventData.id;
-                await db.collection("events").doc(docId).set(eventData);
-            } else {
-                events.push({ id: eventData.id, ...eventData });
-                saveLocalData();
-                refreshUIs();
-            }
-        }
-
-        async function removeEvent(id) {
-            if (isCloudMode) {
-                await db.collection("events").doc(id).delete();
-            } else {
-                events = events.filter(e => e.id !== id);
-                saveLocalData();
-                refreshUIs();
-            }
-        }
-
-        async function updateEventDoc(id, fields) {
-            if (isCloudMode) {
-                await db.collection("events").doc(id).update(fields);
-            } else {
-                const idx = events.findIndex(e => e.id === id);
-                if (idx !== -1) {
-                    for (const key in fields) {
-                        if (key.includes('.')) {
-                            const parts = key.split('.');
-                            let temp = events[idx];
-                            for (let i = 0; i < parts.length - 1; i++) {
-                                if (!temp[parts[i]]) temp[parts[i]] = {};
-                                temp = temp[parts[i]];
-                            }
-                            temp[parts[parts.length - 1]] = fields[key];
-                        } else {
-                            events[idx][key] = fields[key];
-                        }
-                    }
-                    saveLocalData();
-                    refreshUIs();
-                }
-            }
-        }
-
-        async function saveLocations() {
-            if (isCloudMode) {
-                await db.collection("locations").doc("meta").set({ list: locations });
-            } else {
-                saveLocalData();
-                updateLocationSelect();
-                renderLocationManager();
-            }
-        }
-
-        async function writeOrganizer(orgData) {
-            if (isCloudMode) {
-                const docId = orgData.id;
-                delete orgData.id;
-                await db.collection("organizers").doc(docId).set(orgData);
-            } else {
-                organizers.push(orgData);
-                saveLocalData();
-                renderOrganizers();
-                updatePendingList();
-            }
-        }
-
-        async function removeOrganizer(id) {
-            if (isCloudMode) {
-                await db.collection("organizers").doc(id).delete();
-            } else {
-                organizers = organizers.filter(o => o.id !== id);
-                saveLocalData();
-                renderOrganizers();
-                updatePendingList();
-            }
-        }
-
-        async function updateOrganizerDoc(id, fields) {
-            if (isCloudMode) {
-                await db.collection("organizers").doc(id).update(fields);
-            } else {
-                const idx = organizers.findIndex(o => o.id === id);
-                if (idx !== -1) {
-                    for (const key in fields) {
-                        if (key.includes('.')) {
-                            const parts = key.split('.');
-                            let temp = organizers[idx];
-                            for (let i = 0; i < parts.length - 1; i++) {
-                                if (!temp[parts[i]]) temp[parts[i]] = {};
-                                temp = temp[parts[i]];
-                            }
-                            temp[parts[parts.length - 1]] = fields[key];
-                        } else {
-                            organizers[idx][key] = fields[key];
-                        }
-                    }
-                    saveLocalData();
-                    renderOrganizers();
-                    updatePendingList();
-                }
-            }
+        function loadLocalData() {
+            events = JSON.parse(localStorage.getItem('soccer_events') || '[]');
+            locations = JSON.parse(localStorage.getItem('soccer_locations') || '["Turf BGC"]');
+            organizers = JSON.parse(localStorage.getItem('soccer_organizers') || '[]');
+            refreshUIs();
         }
 
         function saveLocalData() {
-            localStorage.setItem('soccer_events_v10', JSON.stringify(events));
-            localStorage.setItem('soccer_locations_v10', JSON.stringify(locations));
-            localStorage.setItem('soccer_organizers_v10', JSON.stringify(organizers));
+            localStorage.setItem('soccer_events', JSON.stringify(events));
+            localStorage.setItem('soccer_locations', JSON.stringify(locations));
+            localStorage.setItem('soccer_organizers', JSON.stringify(organizers));
         }
 
         function refreshUIs() {
-            if (calendar) { calendar.refetchEvents(); }
+            if (calendar) calendar.refetchEvents();
             updatePendingList();
             renderOrganizers();
             updateLocationSelect();
             renderLocationManager();
         }
 
-        function updateOrganizerPreview() {
-            const name = document.getElementById('orgFormName').value.trim() || "チーム名 / コミュニティ名";
-            const logo = document.getElementById('orgFormLogo').value.trim();
-            
-            let location = document.getElementById('orgFormLocationSelect').value;
-            if (location === '__custom__') {
-                location = document.getElementById('orgFormLocationCustom').value.trim();
-            }
-            if (!location) location = "主な開催場所";
-
-            const desc = document.getElementById('orgFormDesc').value.trim() || "簡単な紹介説明文がここに表示されます。";
-            const link = document.getElementById('orgFormLink').value.trim() || "#";
-
-            document.getElementById('previewName').innerText = name;
-            document.getElementById('previewLocation').innerText = location;
-            document.getElementById('previewDesc').innerText = desc;
-            document.getElementById('previewLink').href = link;
-
-            const logoContainer = document.getElementById('previewLogoContainer');
-            if (logo) {
-                logoContainer.innerHTML = `<img src="${logo}" alt="Logo Preview" class="w-12 h-12 rounded-full object-cover border border-slate-600 bg-slate-800 shrink-0" onerror="handlePreviewLogoError(this, '${name}')">`;
-            } else {
-                logoContainer.innerHTML = `<div class="w-12 h-12 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0 select-none">${name.substring(0,2)}</div>`;
-            }
-        }
-
-        function handlePreviewLogoError(imgEl, name) {
-            imgEl.onerror = null;
-            imgEl.parentElement.innerHTML = `<div class="w-12 h-12 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0 select-none">${name.substring(0,2)}</div>`;
-        }
-
-        function handleOrgDescInput() {
-            const descInput = document.getElementById('orgFormDesc');
-            const countEl = document.getElementById('orgDescCount');
-            const len = descInput.value.length;
-            countEl.innerText = `${len} / 200 文字`;
-            if (len >= 200) {
-                countEl.classList.remove('text-slate-500');
-                countEl.classList.add('text-amber-400');
-            } else {
-                countEl.classList.remove('text-amber-400');
-                countEl.classList.add('text-slate-500');
-            }
-            updateOrganizerPreview();
-        }
-
-        function openOrganizerModalWithPreview() {
-            document.getElementById('addOrganizerForm').reset();
-            document.getElementById('orgDescCount').innerText = "0 / 200 文字";
-            document.getElementById('orgDescCount').className = "text-[10px] text-slate-500 font-semibold";
-            updateLocationSelect();
-            goToOrganizerFormStep(); 
-            openModal('addOrganizerModal');
-        }
-
-        function goToOrganizerPreviewStep() {
-            const form = document.getElementById('addOrganizerForm');
-            if (!form.reportValidity()) {
-                return; 
-            }
-            updateOrganizerPreview();
-            document.getElementById('orgStepForm').classList.add('hidden');
-            document.getElementById('orgStepPreview').classList.remove('hidden');
-        }
-
-        function goToOrganizerFormStep() {
-            document.getElementById('orgStepPreview').classList.add('hidden');
-            document.getElementById('orgStepForm').classList.remove('hidden');
-        }
-
-        function openOrganizerDetailModal(id) {
-            selectedOrganizerId = id; 
-            const org = organizers.find(o => o.id === id);
-            if (!org) return;
-
-            document.getElementById('orgDetailName').innerText = org.name;
-            document.getElementById('orgDetailLocation').innerText = org.location || '-';
-            document.getElementById('orgDetailDesc').innerText = org.desc;
-            document.getElementById('orgDetailAuthor').innerText = org.author || '不明';
-
-            const logoContainer = document.getElementById('orgDetailLogoContainer');
-            if (org.logo) {
-                logoContainer.innerHTML = `<img src="${org.logo}" alt="Logo" class="w-14 h-14 rounded-full object-cover border border-slate-600 bg-slate-800 shrink-0">`;
-            } else {
-                logoContainer.innerHTML = `<div class="w-14 h-14 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-xl shrink-0 select-none">${org.name.substring(0,2)}</div>`;
-            }
-
-            const linkEl = document.getElementById('orgDetailLink');
-            if (org.link) {
-                linkEl.href = org.link;
-                linkEl.classList.remove('hidden');
-            } else {
-                linkEl.classList.add('hidden');
-            }
-
-            const delBtn = document.getElementById('orgDetailDeleteBtn');
-            const showDelete = isAdmin || (org.deletePassword ? true : false);
-            if (showDelete) {
-                delBtn.classList.remove('hidden');
-                delBtn.innerText = isAdmin ? "削除 (Admin)" : "削除";
-            } else {
-                delBtn.classList.add('hidden');
-            }
-
-            openModal('organizerDetailModal');
-        }
-
-        async function handleOrganizerDeleteFromModal() {
-            if (!selectedOrganizerId) return;
-            await deleteOrganizer(selectedOrganizerId);
-        }
-
-        function renderOrganizers() {
-            const container = document.getElementById('organizers-list');
-            if(!container) return;
-            const approvedOrganizers = organizers.filter(org => org.status === 'approved' || !org.status);
-            
-            container.innerHTML = approvedOrganizers.map(org => {
-                const logoHtml = org.logo 
-                    ? `<img src="${org.logo}" alt="${org.name} Logo" class="w-12 h-12 rounded-full object-cover border border-slate-600 bg-slate-800 shrink-0">`
-                    : `<div class="w-12 h-12 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0 select-none">${org.name.substring(0,2)}</div>`;
-
-                const showDelete = isAdmin || (org.deletePassword ? true : false);
-
-                return `
-                    <div onclick="openOrganizerDetailModal('${org.id}')" class="bg-slate-700/40 border border-slate-600/50 p-4 rounded-xl flex flex-col justify-between hover:border-emerald-500/50 hover:bg-slate-700/60 cursor-pointer transition">
-                        <div class="flex gap-3 items-start">
-                            ${logoHtml}
-                            <div class="space-y-1 overflow-hidden">
-                                <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                    ${org.name}
-                                </h3>
-                                <p class="text-[10px] text-rose-400 font-semibold"><i class="fa-solid fa-map-location-dot"></i> ${org.location || '-'}</p>
-                                <p class="text-xs text-slate-300 leading-relaxed pt-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">${org.desc}</p>
-                            </div>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-600/30 flex justify-between items-center">
-                            <span class="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                <i class="fa-solid fa-expand mr-1"></i>カード詳細
-                            </span>
-                            <div class="flex items-center gap-2">
-                                ${showDelete ? `<button onclick="event.stopPropagation(); deleteOrganizer('${org.id}')" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white text-[10px] px-2 py-1.5 rounded-lg transition"><i class="fa-solid fa-trash"></i></button>` : ''}
-                                <a href="${org.link}" target="_blank" onclick="event.stopPropagation();" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1">
-                                    公式リンク <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function handleSecretClick() {
-            clickCount++;
-            if (clickCount === 3) {
-                clickCount = 0; 
-                const pass = prompt("管理者パスワードを入力してください:");
-                if (pass === ADMIN_PASSWORD) {
-                    isAdmin = true;
-                    document.getElementById('adminIndicator').classList.remove('hidden');
-                    document.getElementById('pendingSection').classList.remove('hidden');
-                    if(!document.getElementById('view-organizers').classList.contains('hidden')) {
-                        document.getElementById('adminLocationManager').classList.remove('hidden');
-                        renderLocationManager();
-                    }
-                    refreshUIs();
-                    alert("管理者モードに切り替えました。");
-                } else if(pass !== null) {
-                    alert("パスワードが違います");
-                }
-            }
-            setTimeout(() => { clickCount = 0; }, 2000);
-        }
-
-        function renderLocationManager() {
-            const container = document.getElementById('location-admin-list');
-            if(!isAdmin || !container) return;
-            container.innerHTML = locations.map(loc => `
-                <div class="bg-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2 text-xs border border-slate-600 group hover:border-emerald-500/50 transition">
-                    <span class="font-medium cursor-pointer hover:text-emerald-400" onclick="editLocation('${loc}')" title="クリックして修正">${loc}</span>
-                    <button onclick="deleteLocation('${loc}')" class="text-slate-400 hover:text-rose-500 transition" title="削除">
-                        <i class="fa-solid fa-circle-xmark"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
-
-        async function editLocation(oldName) {
-            const newName = prompt(`「${oldName}」の新しい名前を入力してください:`, oldName);
-            if (newName && newName.trim() !== "" && newName !== oldName) {
-                const trimmedName = newName.trim();
-                
-                const index = locations.indexOf(oldName);
-                if (index !== -1) {
-                    locations[index] = trimmedName;
-                }
-
-                for (let ev of events) {
-                    if (ev.extendedProps && ev.extendedProps.location === oldName) {
-                        let updatedTitle = ev.title;
-                        if (ev.title.includes(`(${oldName})`)) {
-                            updatedTitle = ev.title.replace(`(${oldName})`, `(${trimmedName})`);
-                        }
-                        await updateEventDoc(ev.id, {
-                            title: updatedTitle,
-                            "extendedProps.location": trimmedName
-                        });
-                    }
-                }
-
-                for (let org of organizers) {
-                    if (org.location === oldName) {
-                        await updateOrganizerDoc(org.id, { location: trimmedName });
-                    }
-                }
-
-                await saveLocations();
-                alert("場所名を更新しました。");
-            }
-        }
-
-        async function deleteLocation(locName) {
-            if(confirm(`「${locName}」を登録済みの場所リストから削除しますか？\n※既存のスケジュール表示には影響しません。`)) {
-                locations = locations.filter(l => l !== locName);
-                await saveLocations();
-            }
-        }
-
-        function generateTimeOptions() {
-            const startSelect = document.getElementById('formStart');
-            const endSelect = document.getElementById('formEnd');
-            if(!startSelect || !endSelect) return;
-            startSelect.innerHTML = ''; endSelect.innerHTML = '';
-            for (let h = 0; h < 24; h++) {
-                const hourStr = String(h).padStart(2, '0');
-                ['00', '30'].forEach(minStr => {
-                    const timeValue = `${hourStr}:${minStr}`;
-                    startSelect.innerHTML += `<option value="${timeValue}">${timeValue}</option>`;
-                    endSelect.innerHTML += `<option value="${timeValue}">${timeValue}</option>`;
-                });
-            }
-        }
-
-        function setDefaultInputs() {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            const dateInput = document.getElementById('formDate');
-            if(dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
-            const startInput = document.getElementById('formStart');
-            const endInput = document.getElementById('formEnd');
-            if(startInput) startInput.value = "20:00";
-            if(endInput) endInput.value = "22:00";
-        }
-
         function updateLocationSelect() {
-            const selects = [
-                { select: document.getElementById('formLocationSelect'), prefix: 'form' },
-                { select: document.getElementById('orgFormLocationSelect'), prefix: 'org' }
+            const sels = [
+                { el: document.getElementById('formLocationSelect'), prefix: 'form' },
+                { el: document.getElementById('orgFormLocationSelect'), prefix: 'org' }
             ];
-
-            selects.forEach(item => {
-                if(!item.select) return;
-                item.select.innerHTML = '<option value="">-- 登録済みの場所から選択 --</option>';
-                locations.forEach(loc => { item.select.innerHTML += `<option value="${loc}">${loc}</option>`; });
-                item.select.innerHTML += '<option value="__custom__">+ 新しい場所を入力する</option>';
-                toggleCustomLocation(item.select.value, item.prefix);
+            sels.forEach(item => {
+                if (!item.el) return;
+                const currentVal = item.el.value;
+                item.el.innerHTML = '<option value="">-- 登録済みの場所から選択 --</option>' + 
+                    locations.map(l => `<option value="${l}">${l}</option>`).join('') + 
+                    '<option value="__custom__">+ 新しい場所を入力する</option>';
+                if (currentVal) item.el.value = currentVal;
             });
         }
 
         function toggleCustomLocation(val, prefix) {
-            const customInput = document.getElementById(prefix === 'org' ? 'orgFormLocationCustom' : 'formLocationCustom');
-            if(!customInput) return;
-            if(val === '__custom__') {
-                customInput.classList.remove('hidden'); customInput.required = true;
+            const input = document.getElementById(prefix === 'org' ? 'orgFormLocationCustom' : 'formLocationCustom');
+            if (val === '__custom__') {
+                input.classList.remove('hidden');
+                input.required = true;
             } else {
-                customInput.classList.add('hidden'); customInput.required = false;
+                input.classList.add('hidden');
+                input.required = false;
             }
-            if (prefix === 'org') updateOrganizerPreview();
-        }
-
-        function openDetailModal(calEvent) {
-            selectedEventId = calEvent.id;
-            selectedEventDate = FullCalendar.formatDate(calEvent.start, {
-                year: 'numeric', month: '2-digit', day: '2-digit'
-            }).replace(/\//g, '-');
-
-            const props = calEvent.extendedProps;
-            document.getElementById('detailHost').innerText = props.host || '';
-            document.getElementById('detailLocation').innerText = props.location || '';
-            document.getElementById('detailAuthor').innerText = props.author || '';
-            document.getElementById('detailDate').innerText = selectedEventDate;
-
-            const startStr = calEvent.start ? FullCalendar.formatDate(calEvent.start, { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-            const endStr = calEvent.end ? FullCalendar.formatDate(calEvent.end, { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
-            document.getElementById('detailTime').innerText = `${startStr} ～ ${endStr}`;
-
-            const tgContainer = document.getElementById('detailTelegramContainer');
-            if (isAdmin && props.telegram && props.telegram !== '-') {
-                document.getElementById('detailTelegram').innerText = props.telegram;
-                tgContainer.classList.remove('hidden');
-            } else {
-                tgContainer.classList.add('hidden');
-            }
-
-            const fbLink = document.getElementById('detailFbLink');
-            if(props.link) { fbLink.href = props.link; fbLink.classList.remove('hidden'); }
-            else { fbLink.classList.add('hidden'); }
-
-            if(props.submittedAt && props.submittedAt !== '-') {
-                document.getElementById('detailSubmittedAt').innerText = props.submittedAt;
-                document.getElementById('detailSubmittedAtContainer').classList.remove('hidden');
-            } else {
-                document.getElementById('detailSubmittedAtContainer').classList.add('hidden');
-            }
-
-            const delBtn = document.getElementById('adminDeleteBtn');
-            const hasPassword = props.deletePassword ? true : false;
-            if (isAdmin || hasPassword) {
-                delBtn.classList.remove('hidden');
-                delBtn.innerText = isAdmin ? "削除 (Admin)" : "削除";
-            } else {
-                delBtn.classList.add('hidden');
-            }
-
-            openModal('detailModal');
-        }
-
-        async function handleDelete() {
-            if(!selectedEventId) return;
-
-            const targetEvent = events.find(e => e.id === selectedEventId);
-            if(!targetEvent) return;
-
-            const props = targetEvent.extendedProps;
-            const isRec = props.isRecurring;
-
-            if (!isAdmin) {
-                const pass = prompt("本人確認のため、申請時に設定した「削除用パスワード」を入力してください:");
-                if (!pass) return;
-
-                const hashedInput = await hashPassword(pass);
-                if (hashedInput !== props.deletePassword) {
-                    alert("パスワードが違います。削除権限がありません。");
-                    return;
-                }
-            }
-
-            if (isRec) {
-                const mode = prompt(
-                    `これは定期開催イベントです。削除方法を選んでください：\n\n` +
-                    `「1」を入力：今回（${selectedEventDate}）のみ削除\n` +
-                    `「2」を入力：この定期スケジュールをすべて削除\n\n` +
-                    `キャンセルする場合は何も入力せず閉じてください。`
-                );
-
-                if (mode === "1") {
-                    let exceptions = props.exceptions || [];
-                    if (!exceptions.includes(selectedEventDate)) {
-                        exceptions.push(selectedEventDate);
-                    }
-                    await updateEventDoc(selectedEventId, { "extendedProps.exceptions": exceptions });
-                    alert(`${selectedEventDate} の回を非表示にしました。`);
-                } else if (mode === "2") {
-                    if (confirm("本当にこの定期開催スケジュールを完全に削除しますか？")) {
-                        await removeEvent(selectedEventId);
-                        alert("定期スケジュールをすべて削除しました。");
-                    } else {
-                        return;
-                    }
-                } else {
-                    if (mode !== null) alert("無効な入力です。削除をキャンセルしました。");
-                    return;
-                }
-            } else {
-                if(confirm("このイベントを削除しますか？")) {
-                    await removeEvent(selectedEventId);
-                    alert("イベントを削除しました。");
-                } else {
-                    return;
-                }
-            }
-
-            closeModal('detailModal');
         }
 
         async function handleFormSubmit(e) {
             e.preventDefault();
-            const type = document.querySelector('input[name="scheduleType"]:checked').value;
-            const startT = document.getElementById('formStart').value;
-            const endT = document.getElementById('formEnd').value;
-            const host = document.getElementById('formHost').value;
-            const user = document.getElementById('formUser').value;
-            const link = document.getElementById('formLink').value;
-            const plainPassword = document.getElementById('formDeletePassword').value;
-            
-            let inputTelegram = document.getElementById('formTelegram').value.trim();
-            if (inputTelegram.startsWith('@')) { inputTelegram = inputTelegram.substring(1); }
-            const telegram = inputTelegram ? `@${inputTelegram}` : '-';
-            
             let loc = document.getElementById('formLocationSelect').value;
-            let isNewLoc = false;
-            if(loc === '__custom__') {
+            let isNew = false;
+            if (loc === '__custom__') {
                 loc = document.getElementById('formLocationCustom').value.trim();
-                isNewLoc = true;
+                isNew = true;
             }
+            if (!loc) return alert("場所を選択してください");
 
-            if (!loc) {
-                alert("ピッチ・詳細場所を選択または入力してください。");
-                return;
-            }
+            const type = document.querySelector('input[name="scheduleType"]:checked').value;
+            const host = document.getElementById('formHost').value;
+            const pass = await hashPassword(document.getElementById('formDeletePassword').value);
 
-            const autoApprove = isAdmin; 
-            const now = new Date();
-            const submitString = `${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-            const hashedPassword = await hashPassword(plainPassword);
-
-            let newEvent = {
-                id: String(Date.now()),
+            const data = {
+                title: type === 'solo' ? `${host} (${loc})` : `【定期】${host} (${loc})`,
                 extendedProps: {
-                    host: host, location: loc, link: link,
-                    author: user,
-                    telegram: telegram,
-                    deletePassword: hashedPassword,
-                    status: autoApprove ? "approved" : "pending",
-                    isNewLoc: isNewLoc, submittedAt: submitString,
+                    host: host,
+                    location: loc,
+                    link: document.getElementById('formLink').value,
+                    author: document.getElementById('formUser').value,
+                    telegram: document.getElementById('formTelegram').value,
+                    deletePassword: pass,
+                    status: isAdmin ? "approved" : "pending",
+                    isRecurring: type === 'recurring',
+                    submittedAt: new Date().toLocaleString(),
                     exceptions: []
                 }
             };
 
-            if(type === 'solo') {
-                const date = document.getElementById('formDate').value;
-                newEvent.title = `${host} (${loc})`;
-                newEvent.start = `${date}T${startT}:00`;
-                newEvent.end = `${date}T${endT}:00`;
-                newEvent.extendedProps.isRecurring = false;
+            if (type === 'solo') {
+                const d = document.getElementById('formDate').value;
+                data.start = `${d}T${document.getElementById('formStart').value}:00`;
+                data.end = `${d}T${document.getElementById('formEnd').value}:00`;
             } else {
-                const checkboxes = document.querySelectorAll('input[name="formDays"]:checked');
-                const days = Array.from(checkboxes).map(cb => parseInt(cb.value));
-                if(days.length === 0) {
-                    alert("少なくとも1つの曜日を選択してください。");
-                    return;
-                }
-                newEvent.title = `【定期】${host} (${loc})`;
-                newEvent.daysOfWeek = days;
-                newEvent.startTime = `${startT}:00`;
-                newEvent.endTime = `${endT}:00`;
-                newEvent.color = "#047857"; 
-                newEvent.extendedProps.isRecurring = true;
+                data.daysOfWeek = Array.from(document.querySelectorAll('input[name="formDays"]:checked')).map(c => parseInt(c.value));
+                data.startTime = `${document.getElementById('formStart').value}:00`;
+                data.endTime = `${document.getElementById('formEnd').value}:00`;
+                data.color = "#047857";
             }
 
-            await writeEvent(newEvent);
-            
-            if(autoApprove) {
-                if(isNewLoc && !locations.includes(loc)) { 
+            if (isCloudMode) {
+                await db.collection("events").add(data);
+                if (isNew && !locations.includes(loc)) {
                     locations.push(loc);
-                    await saveLocations();
+                    await db.collection("locations").doc("meta").set({list: locations});
                 }
-                alert("スケジュールを追加しました！");
             } else {
-                const dateDetail = (type === 'solo') ? document.getElementById('formDate').value : "毎週曜日定期枠";
-                const messageText = `⚽【新着：オープンプレー申請】\n━━━━━━━━━━━━━━\n👤 申請者: ${telegram}\n⏰ タイプ: ${type === 'solo' ? '単発' : '定期開催'}\n🏆 主催: ${host}\n📅 日時/枠: ${dateDetail} (${startT}～${endT})\n📍 場所: ${loc}\n🔗 FB: ${link}\n━━━━━━━━━━━━━━\n※管理画面から承認を行ってください。`;
-                
-                const tgUrl = `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`;
-                fetch(tgUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: MY_TELEGRAM_CHAT_ID, text: messageText })
-                }).catch(err => console.error(err));
-
-                alert("スケジュールの申請が完了しました！管理者の承認をお待ちください。");
+                events.push({id: Date.now().toString(), ...data});
+                if (isNew && !locations.includes(loc)) locations.push(loc);
+                saveLocalData();
+                refreshUIs();
             }
-
             closeModal('addModal');
-            document.getElementById('addForm').reset();
-            toggleScheduleTypeField('solo'); 
-            setDefaultInputs();
+            alert(isAdmin ? "追加しました" : "申請を受け付けました。管理者の承認をお待ちください。");
         }
 
         async function handleOrganizerFormSubmit(e) {
             e.preventDefault();
-            const author = document.getElementById('orgFormUser').value.trim();
-            let inputTelegram = document.getElementById('orgFormTelegram').value.trim();
-            if (inputTelegram.startsWith('@')) { inputTelegram = inputTelegram.substring(1); }
-            const telegram = inputTelegram ? `@${inputTelegram}` : '-';
-            
-            const name = document.getElementById('orgFormName').value.trim();
-            const logo = document.getElementById('orgFormLogo').value.trim();
-            
-            let location = document.getElementById('orgFormLocationSelect').value;
-            let isNewLoc = false;
-            if (location === '__custom__') {
-                location = document.getElementById('orgFormLocationCustom').value.trim();
-                isNewLoc = true;
+            let loc = document.getElementById('orgFormLocationSelect').value;
+            let isNew = false;
+            if (loc === '__custom__') {
+                loc = document.getElementById('orgFormLocationCustom').value.trim();
+                isNew = true;
             }
+            if (!loc) return alert("場所を選択してください");
 
-            if (!location) {
-                alert("主な開催場所を選択または入力してください。");
-                return;
-            }
-
-            const desc = document.getElementById('orgFormDesc').value.trim();
-            const link = document.getElementById('orgFormLink').value.trim();
-            const plainPassword = document.getElementById('orgFormDeletePassword').value;
-
-            const autoApprove = isAdmin;
-            const hashedPassword = await hashPassword(plainPassword);
-
-            const newOrg = {
-                id: 'org_' + Date.now(),
-                name,
-                desc,
-                link,
-                logo,
-                location,
-                telegram,
-                author,
-                deletePassword: hashedPassword,
-                status: autoApprove ? "approved" : "pending",
-                isNewLoc: isNewLoc
+            const data = {
+                name: document.getElementById('orgFormName').value,
+                location: loc,
+                desc: document.getElementById('orgFormDesc').value,
+                link: document.getElementById('orgFormLink').value,
+                logo: document.getElementById('orgFormLogo').value,
+                author: document.getElementById('orgFormUser').value,
+                telegram: document.getElementById('orgFormTelegram').value,
+                deletePassword: await hashPassword(document.getElementById('orgFormDeletePassword').value),
+                status: isAdmin ? "approved" : "pending"
             };
 
-            await writeOrganizer(newOrg);
-
-            if (autoApprove) {
-                if(isNewLoc && !locations.includes(location)) {
-                    locations.push(location);
-                    await saveLocations();
+            if (isCloudMode) {
+                await db.collection("organizers").add(data);
+                if (isNew && !locations.includes(loc)) {
+                    locations.push(loc);
+                    await db.collection("locations").doc("meta").set({list: locations});
                 }
-                alert("コミュニティ情報を登録しました。");
             } else {
-                const messageText = `⚽【新着：コミュニティ登録申請】\n━━━━━━━━━━━━━━\n👤 申請者: ${telegram} (${author})\n🏆 チーム名: ${name}\n📍 主な場所: ${location}\n📝 説明: ${desc}\n🔗 リンク: ${link}\n━━━━━━━━━━━━━━\n※管理画面から承認を行ってください。`;
-                
-                const tgUrl = `https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`;
-                fetch(tgUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ chat_id: MY_TELEGRAM_CHAT_ID, text: messageText })
-                }).catch(err => console.error(err));
-
-                alert("コミュニティ登録の申請が完了しました！管理者の承認をお待ちください。");
+                organizers.push({id: Date.now().toString(), ...data});
+                if (isNew && !locations.includes(loc)) locations.push(loc);
+                saveLocalData();
+                refreshUIs();
             }
-
             closeModal('addOrganizerModal');
-            document.getElementById('addOrganizerForm').reset();
+            alert(isAdmin ? "登録しました" : "申請を受け付けました。");
+        }
+
+        function openDetailModal(e) {
+            selectedEventId = e.id;
+            selectedEventDate = FullCalendar.formatDate(e.start, {year:'numeric', month:'2-digit', day:'2-digit'}).replace(/\//g, '-');
+            const p = e.extendedProps;
+            document.getElementById('detailHost').innerText = p.host;
+            document.getElementById('detailLocation').innerText = p.location;
+            document.getElementById('detailDate').innerText = selectedEventDate;
+            document.getElementById('detailTime').innerText = `${FullCalendar.formatDate(e.start, {hour:'2-digit', minute:'2-digit'})} - ${FullCalendar.formatDate(e.end, {hour:'2-digit', minute:'2-digit'})}`;
+            document.getElementById('detailAuthor').innerText = p.author;
+            document.getElementById('detailFbLink').href = p.link;
+            document.getElementById('adminDeleteBtn').classList.toggle('hidden', !isAdmin && !p.deletePassword);
+            openModal('detailModal');
+        }
+
+        async function handleDelete() {
+            const ev = events.find(e => e.id === selectedEventId);
+            if (!isAdmin) {
+                const p = prompt("削除用パスワードを入力してください:");
+                if (await hashPassword(p) !== ev.extendedProps.deletePassword) return alert("パスワードが違います");
+            }
+            
+            if (ev.extendedProps.isRecurring) {
+                const m = prompt("1: 今回のみ非表示, 2: 定期枠ごと削除");
+                if (m === "1") {
+                    const ex = ev.extendedProps.exceptions || [];
+                    ex.push(selectedEventDate);
+                    if (isCloudMode) await db.collection("events").doc(selectedEventId).update({"extendedProps.exceptions": ex});
+                    else { ev.extendedProps.exceptions = ex; saveLocalData(); refreshUIs(); }
+                } else if (m === "2") {
+                    if (isCloudMode) await db.collection("events").doc(selectedEventId).delete();
+                    else { events = events.filter(e => e.id !== selectedEventId); saveLocalData(); refreshUIs(); }
+                }
+            } else {
+                if (isCloudMode) await db.collection("events").doc(selectedEventId).delete();
+                else { events = events.filter(e => e.id !== selectedEventId); saveLocalData(); refreshUIs(); }
+            }
+            closeModal('detailModal');
+        }
+
+        function renderOrganizers() {
+            const list = document.getElementById('organizers-list');
+            list.innerHTML = organizers.filter(o => o.status === 'approved').map(o => `
+                <div class="bg-slate-700/40 p-4 rounded-xl border border-slate-600 flex gap-3">
+                    ${o.logo ? `<img src="${o.logo}" class="w-12 h-12 rounded-full object-cover">` : `<div class="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center font-bold">${o.name[0]}</div>`}
+                    <div class="flex-1">
+                        <h3 class="font-bold text-emerald-400">${o.name}</h3>
+                        <p class="text-[10px] text-rose-400 font-bold"><i class="fa-solid fa-location-dot"></i> ${o.location}</p>
+                        <p class="text-xs text-slate-300 mt-1 line-clamp-2">${o.desc}</p>
+                        <a href="${o.link}" target="_blank" class="inline-block mt-2 text-[10px] bg-emerald-600 px-2 py-1 rounded font-bold">公式リンク</a>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function updatePendingList() {
-            const pendingEvents = events.filter(e => e.extendedProps && e.extendedProps.status === 'pending');
-            const pendingCountEl = document.getElementById('pendingCount');
-            if (pendingCountEl) pendingCountEl.innerText = pendingEvents.length;
+            const pEvents = events.filter(e => e.extendedProps.status === 'pending');
+            const pOrgs = organizers.filter(o => o.status === 'pending');
+            document.getElementById('pendingCount').innerText = pEvents.length;
+            document.getElementById('pendingOrganizerCount').innerText = pOrgs.length;
+            document.getElementById('pendingSection').classList.toggle('hidden', !isAdmin || (pEvents.length === 0 && pOrgs.length === 0));
+            
+            document.getElementById('pendingList').innerHTML = pEvents.map(e => `
+                <div class="bg-slate-900 p-3 rounded-lg text-xs flex justify-between items-center border border-slate-700">
+                    <div>
+                        <p class="font-bold text-emerald-400">${e.extendedProps.host}</p>
+                        <p class="text-slate-400">${e.extendedProps.location} | ${e.extendedProps.author}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="approveEvent('${e.id}')" class="bg-emerald-600 px-3 py-1 rounded font-bold">承認</button>
+                        <button onclick="rejectEvent('${e.id}')" class="bg-rose-600/20 text-rose-400 px-3 py-1 rounded font-bold">却下</button>
+                    </div>
+                </div>
+            `).join('');
 
-            const schedContainer = document.getElementById('pendingList');
-            if(schedContainer) {
-                schedContainer.innerHTML = "";
-                if(pendingEvents.length === 0) {
-                    schedContainer.innerHTML = "<p class='text-xs text-slate-400'>現在、承認待ちのスケジュールはありません。</p>";
-                } else {
-                    pendingEvents.forEach(e => {
-                        const isRec = e.extendedProps.isRecurring;
-                        let dateStr = "";
-                        let timeStr = "";
-                        if(!isRec) {
-                            dateStr = e.start ? e.start.split('T')[0] : "-";
-                            timeStr = `${e.start ? e.start.split('T')[1].substring(0,5) : ""} ～ ${e.end ? e.end.split('T')[1].substring(0,5) : ""}`;
-                        } else {
-                            const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
-                            const dStrs = e.daysOfWeek ? e.daysOfWeek.map(d => dayNames[d]) : [];
-                            dateStr = `毎週 [${dStrs.join(', ')}]`;
-                            timeStr = `${e.startTime ? e.startTime.substring(0,5) : ""} ～ ${e.endTime ? e.endTime.substring(0,5) : ""}`;
-                        }
-                        
-                        const subAt = e.extendedProps.submittedAt || "-";
-                        const fbUrl = e.extendedProps.link || "#";
-
-                        const div = document.createElement('div');
-                        div.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs";
-                        div.innerHTML = `
-                            <div class="flex-1 w-full space-y-3">
-                                <div class="flex items-center justify-between border-b border-slate-700/60 pb-2">
-                                    <span class="text-[10px] bg-slate-900 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">
-                                        <i class="fa-regular fa-clock mr-1 text-amber-400"></i>申請受信: ${subAt}
-                                    </span>
-                                    ${isRec ? `<span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 font-bold">定期枠の申請</span>` : ''}
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 bg-slate-900/40 p-3 rounded-lg border border-slate-700/50">
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">👤 申請者</p>
-                                        <p class="text-slate-200 font-medium text-sm mt-0.5">${e.extendedProps.author}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">✈️ Telegram</p>
-                                        <p class="text-sky-400 font-mono mt-0.5">${e.extendedProps.telegram}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">🏆 主催者 / グループ名</p>
-                                        <p class="text-emerald-400 font-bold text-sm mt-0.5">${e.extendedProps.host}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">📍 ピッチ場所</p>
-                                        <p class="text-rose-400 font-semibold mt-0.5">${e.extendedProps.location}</p>
-                                    </div>
-                                    <div class="sm:col-span-2 border-t border-slate-700/40 my-0.5 pt-2">
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">📅 スケジュール枠</p>
-                                        <p class="text-white font-bold text-sm mt-0.5 flex items-center gap-1.5">
-                                            <span>${dateStr}</span>
-                                            <span class="text-slate-500 text-xs">|</span>
-                                            <span class="text-amber-400">${timeStr}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2 bg-slate-900/80 p-2 rounded border border-slate-700/80 w-full">
-                                    <i class="fa-brands fa-facebook text-emerald-400 shrink-0 ml-1 text-sm"></i>
-                                    <input type="text" value="${fbUrl}" readonly class="bg-transparent text-[11px] text-slate-300 w-full focus:outline-none select-all cursor-text font-mono truncate">
-                                    <a href="${fbUrl}" target="_blank" class="text-emerald-400 hover:text-emerald-300 shrink-0 px-2.5 py-1 bg-emerald-600/10 hover:bg-emerald-600/20 rounded font-bold transition text-[11px] flex items-center gap-1">
-                                        リンク確認 <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="flex md:flex-col gap-2 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-700/50">
-                                <button onclick="approveEvent('${e.id}')" class="flex-1 md:w-24 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-1"><i class="fa-solid fa-check"></i> 承認</button>
-                                <button onclick="rejectEvent('${e.id}')" class="flex-1 md:w-24 bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-1"><i class="fa-solid fa-xmark"></i> 却下</button>
-                            </div>
-                        `;
-                        schedContainer.appendChild(div);
-                    });
-                }
-            }
-
-            const pendingOrgs = organizers.filter(org => org.status === 'pending');
-            const pendingOrgCountEl = document.getElementById('pendingOrganizerCount');
-            if (pendingOrgCountEl) pendingOrgCountEl.innerText = pendingOrgs.length;
-
-            const orgContainer = document.getElementById('pendingOrganizerList');
-            if(orgContainer) {
-                orgContainer.innerHTML = "";
-                if(pendingOrgs.length === 0) {
-                    orgContainer.innerHTML = "<p class='text-xs text-slate-400'>現在、承認待ちの主催者登録申請はありません。</p>";
-                } else {
-                    pendingOrgs.forEach(org => {
-                        const logoHtml = org.logo 
-                            ? `<img src="${org.logo}" alt="${org.name} Logo" class="w-12 h-12 rounded-full object-cover border border-slate-600 bg-slate-800 shrink-0">`
-                            : `<div class="w-12 h-12 rounded-full bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0 select-none">${org.name.substring(0,2)}</div>`;
-
-                        const div = document.createElement('div');
-                        div.className = "bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs";
-                        div.innerHTML = `
-                            <div class="flex-1 w-full space-y-3">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 bg-slate-900/40 p-3 rounded-lg border border-slate-700/50">
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">👤 申請担当者</p>
-                                        <p class="text-slate-200 font-medium text-sm mt-0.5">${org.author}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">✈️ Telegram</p>
-                                        <p class="text-sky-400 font-mono mt-0.5">${org.telegram}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">🏆 チーム / コミュニティ名</p>
-                                        <p class="text-emerald-400 font-bold text-sm mt-0.5">${org.name}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">📍 主な開催場所</p>
-                                        <p class="text-rose-400 font-semibold mt-0.5">${org.location || '-'}</p>
-                                    </div>
-                                    ${org.logo ? `
-                                    <div class="sm:col-span-2">
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">🖼️ ロゴURL</p>
-                                        <p class="text-slate-400 mt-0.5 truncate select-all">${org.logo}</p>
-                                    </div>` : ''}
-                                    <div class="sm:col-span-2 border-t border-slate-700/40 my-0.5 pt-2">
-                                        <p class="text-[10px] text-slate-500 font-bold tracking-wider uppercase">📝 簡単な説明</p>
-                                        <p class="text-slate-200 mt-0.5">${org.desc}</p>
-                                    </div>
-                                    
-                                    <div class="space-y-1.5 sm:col-span-2 border-t border-slate-700/40 pt-3 mt-1">
-                                        <p class="text-[10px] text-emerald-400 font-bold tracking-wider uppercase flex items-center gap-1">
-                                            <i class="fa-solid fa-eye"></i> 掲載時のカード表示プレビュー
-                                        </p>
-                                        <div class="bg-slate-700/30 border border-slate-600/50 p-4 rounded-xl flex flex-col justify-between hover:border-emerald-500/50 transition text-left mt-1">
-                                            <div class="flex gap-3 items-start">
-                                                ${logoHtml}
-                                                <div class="space-y-1">
-                                                    <h3 class="text-base font-bold text-white flex items-center gap-2">
-                                                        ${org.name}
-                                                    </h3>
-                                                    <p class="text-[10px] text-rose-400 font-semibold"><i class="fa-solid fa-map-location-dot"></i> ${org.location || '-'}</p>
-                                                    <p class="text-xs text-slate-300 leading-relaxed pt-1" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-all;">${org.desc}</p>
-                                                </div>
-                                            </div>
-                                            <div class="mt-4 pt-3 border-t border-slate-600/30 flex justify-between items-center">
-                                                <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                                                    <i class="fa-solid fa-circle-info mr-1"></i>最新情報は公式へ
-                                                </span>
-                                                <span class="bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 font-bold text-[10px] px-2.5 py-1 rounded-md flex items-center gap-1 select-none">
-                                                    公式リンク確認済 <i class="fa-solid fa-check text-[9px]"></i>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2 bg-slate-900/80 p-2 rounded border border-slate-700/80 w-full">
-                                    <i class="fa-solid fa-link text-emerald-400 shrink-0 ml-1 text-sm"></i>
-                                    <input type="text" value="${org.link}" readonly class="bg-transparent text-[11px] text-slate-300 w-full focus:outline-none select-all cursor-text font-mono truncate">
-                                    <a href="${org.link}" target="_blank" class="text-emerald-400 hover:text-emerald-300 shrink-0 px-2.5 py-1 bg-emerald-600/10 hover:bg-emerald-600/20 rounded font-bold transition text-[11px] flex items-center gap-1">
-                                        公式リンク確認 <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="flex md:flex-col gap-2 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-700/50">
-                                <button onclick="approveOrganizer('${org.id}')" class="flex-1 md:w-24 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-1"><i class="fa-solid fa-check"></i> 承認</button>
-                                <button onclick="rejectOrganizer('${org.id}')" class="flex-1 md:w-24 bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white font-bold py-2 rounded shadow transition flex items-center justify-center gap-1"><i class="fa-solid fa-xmark"></i> 却下</button>
-                            </div>
-                        `;
-                        orgContainer.appendChild(div);
-                    });
-                }
-            }
+            document.getElementById('pendingOrganizerList').innerHTML = pOrgs.map(o => `
+                <div class="bg-slate-900 p-3 rounded-lg text-xs flex justify-between items-center border border-slate-700">
+                    <div>
+                        <p class="font-bold text-emerald-400">${o.name}</p>
+                        <p class="text-slate-400">${o.location} | ${o.author}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="approveOrg('${o.id}')" class="bg-emerald-600 px-3 py-1 rounded font-bold">承認</button>
+                        <button onclick="rejectOrg('${o.id}')" class="bg-rose-600/20 text-rose-400 px-3 py-1 rounded font-bold">却下</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         async function approveEvent(id) {
-            const idx = events.findIndex(e => e.id === id);
-            if(idx !== -1) {
-                const loc = events[idx].extendedProps.location;
-                if(events[idx].extendedProps.isNewLoc && !locations.includes(loc)) {
-                    locations.push(loc);
-                    await saveLocations();
-                }
-                await updateEventDoc(id, {
-                    "extendedProps.status": "approved",
-                    "extendedProps.exceptions": []
-                });
-                alert("スケジュールを承認しました。");
-            }
+            if (isCloudMode) await db.collection("events").doc(id).update({"extendedProps.status": "approved"});
+            else { events.find(e => e.id === id).extendedProps.status = "approved"; saveLocalData(); refreshUIs(); }
         }
-
         async function rejectEvent(id) {
-            if(confirm("この申請を却下し、削除しますか？")) {
-                await removeEvent(id);
-                alert("申請を却下しました。");
+            if (isCloudMode) await db.collection("events").doc(id).delete();
+            else { events = events.filter(e => e.id !== id); saveLocalData(); refreshUIs(); }
+        }
+        async function approveOrg(id) {
+            if (isCloudMode) await db.collection("organizers").doc(id).update({status: "approved"});
+            else { organizers.find(o => o.id === id).status = "approved"; saveLocalData(); refreshUIs(); }
+        }
+        async function rejectOrg(id) {
+            if (isCloudMode) await db.collection("organizers").doc(id).delete();
+            else { organizers = organizers.filter(o => o.id !== id); saveLocalData(); refreshUIs(); }
+        }
+
+        function generateTimeOptions() {
+            const start = document.getElementById('formStart'), end = document.getElementById('formEnd');
+            for(let i=0; i<48; i++) {
+                const h = Math.floor(i/2).toString().padStart(2,'0'), m = (i%2===0?'00':'30');
+                const opt = `<option value="${h}:${m}">${h}:${m}</option>`;
+                start.innerHTML += opt; end.innerHTML += opt;
             }
+            start.value = "20:00"; end.value = "22:00";
         }
 
-        async function approveOrganizer(id) {
-            const idx = organizers.findIndex(o => o.id === id);
-            if (idx !== -1) {
-                const loc = organizers[idx].location;
-                if (organizers[idx].isNewLoc && !locations.includes(loc)) {
-                    locations.push(loc);
-                    await saveLocations();
-                }
-                await updateOrganizerDoc(id, { status: "approved" });
-                alert("主催者登録を承認しました。");
-            }
-        }
-
-        async function rejectOrganizer(id) {
-            if(confirm("この主催者申請を却下し、削除しますか？")) {
-                await removeOrganizer(id);
-                alert("申請を却下しました。");
-            }
-        }
-
-        async function deleteOrganizer(orgId) {
-            const org = organizers.find(o => o.id === orgId);
-            if (!org) return;
-
-            if (!isAdmin) {
-                const pass = prompt("本人確認のため、登録時に設定した「削除用パスワード」を入力してください:");
-                if (!pass) return;
-
-                const hashedInput = await hashPassword(pass);
-                if (hashedInput !== org.deletePassword) {
-                    alert("パスワードが違います。削除権限がありません。");
-                    return;
-                }
-            }
-
-            if(confirm(`本当に「${org.name}」のコミュニティ登録情報を完全に削除しますか？`)) {
-                await removeOrganizer(orgId);
-                alert("コミュニティ情報を削除しました。");
-                closeModal('organizerDetailModal');
-            }
-        }
-
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function toggleScheduleTypeField(type) {
-            const soloField = document.getElementById('field-solo-date');
-            const recField = document.getElementById('field-recurring-days');
-            if(type === 'solo') {
-                soloField.classList.remove('hidden');
-                recField.classList.add('hidden');
-                document.getElementById('formDate').required = true;
-            } else {
-                soloField.classList.add('hidden');
-                recField.classList.remove('hidden');
-                document.getElementById('formDate').required = false;
-            }
-        }
-
-        function switchView(view) {
-            const calView = document.getElementById('view-calendar');
-            const orgView = document.getElementById('view-organizers');
-            const tabCal = document.getElementById('tab-calendar');
-            const tabOrg = document.getElementById('tab-organizers');
-
-            if(view === 'calendar') {
-                calView.classList.remove('hidden');
-                orgView.classList.add('hidden');
-                tabCal.className = "px-3 py-1.5 rounded-md bg-slate-900 text-white transition";
-                tabOrg.className = "px-3 py-1.5 rounded-md text-emerald-100 hover:text-white transition";
-                if(calendar) { calendar.updateSize(); }
-            } else {
-                calView.classList.add('hidden');
-                orgView.classList.remove('hidden');
-                tabCal.className = "px-3 py-1.5 rounded-md text-emerald-100 hover:text-white transition";
-                tabOrg.className = "px-3 py-1.5 rounded-md bg-slate-900 text-white transition";
-                if(isAdmin) {
+        function handleSecretClick() {
+            if (++clickCount === 3) {
+                if (prompt("管理者パスワード:") === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    document.getElementById('adminIndicator').classList.remove('hidden');
                     document.getElementById('adminLocationManager').classList.remove('hidden');
-                    renderLocationManager();
+                    refreshUIs();
                 }
+                clickCount = 0;
             }
+        }
+
+        function renderLocationManager() {
+            document.getElementById('location-admin-list').innerHTML = locations.map(l => `
+                <span class="bg-slate-700 px-2 py-1 rounded text-[10px] flex items-center gap-2 border border-slate-600">
+                    ${l} <i class="fa-solid fa-xmark cursor-pointer text-rose-400" onclick="deleteLoc('${l}')"></i>
+                </span>
+            `).join('');
+        }
+
+        async function deleteLoc(l) {
+            if (!confirm("この場所をリストから削除しますか？")) return;
+            locations = locations.filter(x => x !== l);
+            if (isCloudMode) await db.collection("locations").doc("meta").set({list: locations});
+            else { saveLocalData(); refreshUIs(); }
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        function toggleScheduleTypeField(t) {
+            document.getElementById('field-solo-date').classList.toggle('hidden', t!=='solo');
+            document.getElementById('field-recurring-days').classList.toggle('hidden', t==='solo');
+        }
+        function switchView(v) {
+            document.getElementById('view-calendar').classList.toggle('hidden', v!=='calendar');
+            document.getElementById('view-organizers').classList.toggle('hidden', v==='calendar');
+            document.getElementById('tab-calendar').className = v==='calendar' ? "px-3 py-1.5 rounded-md bg-slate-900 text-white transition" : "px-3 py-1.5 rounded-md text-emerald-100 hover:text-white transition";
+            document.getElementById('tab-organizers').className = v==='organizers' ? "px-3 py-1.5 rounded-md bg-slate-900 text-white transition" : "px-3 py-1.5 rounded-md text-emerald-100 hover:text-white transition";
+            if (v === 'calendar') calendar.updateSize();
         }
     </script>
 </body>
