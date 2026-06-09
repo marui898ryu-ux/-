@@ -96,6 +96,20 @@
                 <i class="fa-solid fa-circle-notch fa-spin text-3xl text-emerald-500"></i>
                 <p class="text-xs text-slate-300">データをクラウドから同期中...</p>
             </div>
+
+            <!-- 現在地からの距離フィルター（スマホ最適化） -->
+            <div class="flex flex-wrap items-center gap-2 mb-3 bg-slate-900/30 p-2.5 rounded-lg border border-slate-700/50 text-xs">
+                <span class="font-bold text-slate-400 flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-map-pin text-rose-500"></i> エリア絞り込み:
+                </span>
+                <div class="flex gap-1.5">
+                    <button onclick="setDistanceFilter('all')" id="filter-dist-all" class="px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition">すべて</button>
+                    <button onclick="setDistanceFilter(5)" id="filter-dist-5" class="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition">5km以内</button>
+                    <button onclick="setDistanceFilter(10)" id="filter-dist-10" class="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition">10km以内</button>
+                </div>
+                <span id="locationStatusText" class="text-[10px] text-slate-500 font-semibold sm:ml-auto ml-1 font-mono truncate">現在地未取得</span>
+            </div>
+
             <div id="calendar"></div>
             
             <!-- 今日の予定・明日の予定リスト表示セクション -->
@@ -192,14 +206,22 @@
                     </div>
                 </div>
 
-                <div class="flex gap-2">
-                    <div class="flex-1">
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">開始時間</label>
-                        <select id="formStart" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required></select>
+                <div class="space-y-1">
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">開始時間</label>
+                            <select id="formStart" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required></select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-semibold text-slate-400 mb-1">終了時間</label>
+                            <select id="formEnd" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required></select>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <label class="block text-xs font-semibold text-slate-400 mb-1">終了時間</label>
-                        <select id="formEnd" class="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-emerald-500" required></select>
+                    <!-- クイック時間選択ボタン（スマホ親指最適化） -->
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                        <button type="button" onclick="setQuickTime('08:00', '10:00')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-slate-300 transition font-mono">朝 (08-10)</button>
+                        <button type="button" onclick="setQuickTime('18:00', '20:00')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-slate-300 transition font-mono">夜1 (18-20)</button>
+                        <button type="button" onclick="setQuickTime('20:00', '22:00')" class="text-[10px] bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded text-slate-300 transition font-mono">夜2 (20-22)</button>
                     </div>
                 </div>
                 <div>
@@ -335,15 +357,21 @@
             <div class="space-y-2 text-sm mb-4">
                 <p><i class="fa-regular fa-calendar mr-2 text-slate-400"></i><span id="detailDate"></span></p>
                 <p><i class="fa-regular fa-clock mr-2 text-slate-400"></i><span id="detailTime"></span></p>
-                <p><i class="fa-solid fa-location-dot mr-2 text-rose-500"></i><span id="detailLocation"></span></p>
+                <p>
+                    <i class="fa-solid fa-location-dot mr-2 text-rose-500"></i><span id="detailLocation"></span>
+                    <a id="detailLocationMap" href="#" target="_blank" class="ml-1.5 text-xs text-sky-400 hover:underline"><i class="fa-solid fa-route"></i> ナビ起動</a>
+                </p>
                 <p class="text-xs text-slate-400"><i class="fa-solid fa-user mr-2"></i>情報提供: <span id="detailAuthor"></span></p>
                 <p id="detailTelegramContainer" class="text-xs text-sky-400 hidden"><i class="fa-brands fa-telegram mr-2"></i>Telegram: <span id="detailTelegram"></span></p>
                 <p id="detailSubmittedAtContainer" class="text-xs text-slate-500 hidden"><i class="fa-regular fa-clock mr-2"></i>申請日時: <span id="detailSubmittedAt"></span></p>
             </div>
             <div class="flex gap-2">
                 <a id="detailFbLink" href="#" target="_blank" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-center py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1">
-                    <i class="fa-brands fa-facebook"></i> 公式・詳細リンクを開く
+                    <i class="fa-brands fa-facebook"></i> 公式・詳細
                 </a>
+                <button id="detailShareBtn" onclick="handleEventShare()" class="bg-sky-600 hover:bg-sky-500 text-white px-3 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-share-nodes"></i> シェア
+                </button>
                 <button id="adminDeleteBtn" onclick="handleDelete()" class="bg-rose-600/20 hover:bg-rose-600 text-rose-400 hover:text-white px-3 rounded-lg text-xs font-bold hidden">削除</button>
             </div>
         </div>
@@ -411,6 +439,14 @@
 
         const defaultLocations = ["Turf BGC", "Vermosa Sports Hub", "McKinley Hill Stadium", "Circuit Makati"];
 
+        // GPS coordinates lookup map for Manila/Taguig soccer grounds
+        const STADIUM_COORDINATES = {
+            "Turf BGC": { lat: 14.5518, lng: 121.0505 },
+            "Vermosa Sports Hub": { lat: 14.3986, lng: 120.9774 },
+            "McKinley Hill Stadium": { lat: 14.5312, lng: 121.0478 },
+            "Circuit Makati": { lat: 14.5724, lng: 121.0189 }
+        };
+
         let events = [];
         let locations = [];
         let organizers = [];
@@ -423,6 +459,10 @@
         let selectedOrganizerId = null;
         let calendar = null;
         let clickCount = 0; 
+
+        // GPS state variables
+        let userCoords = null;
+        let distanceFilterLimit = null; // 'all' (null) or number (5, 10)
 
         // Active Firestore Unsubscribe functions
         let unsubscribeEvents = null;
@@ -448,6 +488,72 @@
             return "js_" + Math.abs(hash).toString(16);
         }
 
+        // Haversine formula to compute straight line distance between two lat/lngs in km
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        function setDistanceFilter(limit) {
+            if (limit === 'all') {
+                distanceFilterLimit = null;
+                updateDistanceFilterUI();
+                refreshUIs();
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                alert("お使いの端末は位置情報機能に対応していません。");
+                return;
+            }
+
+            document.getElementById('locationStatusText').innerText = "現在地を取得中...";
+
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    userCoords = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    distanceFilterLimit = limit;
+                    document.getElementById('locationStatusText').innerText = "取得完了";
+                    updateDistanceFilterUI();
+                    refreshUIs();
+                },
+                error => {
+                    console.error("位置情報取得エラー:", error);
+                    alert("位置情報の取得に失敗しました。GPSの使用を許可してください。");
+                    document.getElementById('locationStatusText').innerText = "エラー";
+                },
+                { enableHighAccuracy: true, timeout: 6000, maximumAge: 0 }
+            );
+        }
+
+        function updateDistanceFilterUI() {
+            const btnAll = document.getElementById('filter-dist-all');
+            const btn5 = document.getElementById('filter-dist-5');
+            const btn10 = document.getElementById('filter-dist-10');
+
+            btnAll.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition";
+            btn5.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition";
+            btn10.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition";
+
+            if (distanceFilterLimit === null) {
+                btnAll.className = "px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition";
+            } else if (distanceFilterLimit === 5) {
+                btn5.className = "px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition";
+            } else if (distanceFilterLimit === 10) {
+                btn10.className = "px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition";
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const calendarEl = document.getElementById('calendar');
             const isMobile = window.innerWidth < 768;
@@ -461,8 +567,26 @@
                     right: isMobile ? 'listMonth,dayGridMonth' : 'dayGridMonth,listMonth' 
                 },
                 dayMaxEvents: true,
+                selectable: true,
+                select: function(info) {
+                    // Quick touch-fill date from calendar click/tap helper
+                    document.getElementById('formDate').value = info.startStr;
+                    openModal('addModal');
+                },
                 events: function(info, successCallback, failureCallback) {
-                    const approved = events.filter(e => e.extendedProps && e.extendedProps.status === 'approved');
+                    let approved = events.filter(e => e.extendedProps && e.extendedProps.status === 'approved');
+
+                    // Filter based on GPS proximity
+                    if (distanceFilterLimit !== null && userCoords) {
+                        approved = approved.filter(e => {
+                            const locName = e.extendedProps.location;
+                            const coords = STADIUM_COORDINATES[locName];
+                            if (!coords) return false; // Hide unmatched custom venues if distance limit is active
+                            const dist = calculateDistance(userCoords.lat, userCoords.lng, coords.lat, coords.lng);
+                            return dist <= distanceFilterLimit;
+                        });
+                    }
+
                     successCallback(approved);
                 },
                 eventDidMount: function(info) {
@@ -518,6 +642,19 @@
         function initSyncBackend() {
             const statusEl = document.getElementById('syncStatus');
             const overlay = document.getElementById('loadingOverlay');
+
+            // Offline Caching Step: Preload state from LocalStorage cache before network handshake triggers
+            try {
+                const cachedEvents = localStorage.getItem('soccer_events_v10_cache');
+                const cachedLocs = localStorage.getItem('soccer_locations_v10_cache');
+                const cachedOrgs = localStorage.getItem('soccer_organizers_v10_cache');
+                if (cachedEvents) events = JSON.parse(cachedEvents);
+                if (cachedLocs) locations = JSON.parse(cachedLocs);
+                if (cachedOrgs) organizers = JSON.parse(cachedOrgs);
+                refreshUIs();
+            } catch(e) {
+                console.warn("ローカルキャッシュの事前読み込みに失敗しました:", e);
+            }
 
             if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && firebaseConfig.projectId) {
                 try {
@@ -590,6 +727,12 @@
                 snapshot.forEach(doc => {
                     events.push({ id: doc.id, ...doc.data() });
                 });
+                
+                // Keep local offline backup sync updated
+                try {
+                    localStorage.setItem('soccer_events_v10_cache', JSON.stringify(events));
+                } catch(e) { console.warn(e); }
+
                 refreshUIs();
                 document.getElementById('loadingOverlay').classList.add('hidden');
             }, err => {
@@ -600,6 +743,9 @@
             unsubscribeLocations = db.collection("locations").doc("meta").onSnapshot(doc => {
                 if (doc.exists) {
                     locations = doc.data().list || [];
+                    try {
+                        localStorage.setItem('soccer_locations_v10_cache', JSON.stringify(locations));
+                    } catch(e) { console.warn(e); }
                 } else {
                     locations = defaultLocations;
                     db.collection("locations").doc("meta").set({ list: defaultLocations });
@@ -613,6 +759,9 @@
                 snapshot.forEach(doc => {
                     organizers.push({ id: doc.id, ...doc.data() });
                 });
+                try {
+                    localStorage.setItem('soccer_organizers_v10_cache', JSON.stringify(organizers));
+                } catch(e) { console.warn(e); }
                 renderOrganizers();
                 updatePendingList();
             }, err => {
@@ -1048,6 +1197,11 @@
             if(endInput) endInput.value = "22:00";
         }
 
+        function setQuickTime(start, end) {
+            document.getElementById('formStart').value = start;
+            document.getElementById('formEnd').value = end;
+        }
+
         function updateLocationSelect() {
             const selects = [
                 { select: document.getElementById('formLocationSelect'), prefix: 'form' },
@@ -1082,9 +1236,20 @@
 
             const props = calEvent.extendedProps;
             document.getElementById('detailHost').innerText = props.host || '';
-            document.getElementById('detailLocation').innerText = props.location || '';
+            
+            const detailLocText = props.location || '';
+            document.getElementById('detailLocation').innerText = detailLocText;
             document.getElementById('detailAuthor').innerText = props.author || '';
             document.getElementById('detailDate').innerText = selectedEventDate;
+
+            // Direct route navigation configuration based on stadium coordinates lookup
+            const mapBtn = document.getElementById('detailLocationMap');
+            const coords = STADIUM_COORDINATES[detailLocText];
+            if (coords) {
+                mapBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`;
+            } else {
+                mapBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detailLocText)}`;
+            }
 
             const startStr = calEvent.start ? FullCalendar.formatDate(calEvent.start, { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
             const endStr = calEvent.end ? FullCalendar.formatDate(calEvent.end, { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
@@ -1159,10 +1324,21 @@
 
             const props = rawEv.extendedProps;
             document.getElementById('detailHost').innerText = props.host || '';
-            document.getElementById('detailLocation').innerText = props.location || '';
+            
+            const detailLocText = props.location || '';
+            document.getElementById('detailLocation').innerText = detailLocText;
             document.getElementById('detailAuthor').innerText = props.author || '';
             document.getElementById('detailDate').innerText = targetDateStr;
             document.getElementById('detailTime').innerText = `${startTime} ～ ${endTime}`;
+
+            // Map navigation links setup
+            const mapBtn = document.getElementById('detailLocationMap');
+            const coords = STADIUM_COORDINATES[detailLocText];
+            if (coords) {
+                mapBtn.href = `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`;
+            } else {
+                mapBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(detailLocText)}`;
+            }
 
             const tgContainer = document.getElementById('detailTelegramContainer');
             if (isAdmin && props.telegram && props.telegram !== '-') {
@@ -1195,6 +1371,43 @@
             openModal('detailModal');
         }
 
+        function handleEventShare() {
+            if (!selectedEventId) return;
+            const target = events.find(e => e.id === selectedEventId);
+            if (!target) return;
+
+            const props = target.extendedProps;
+            const isRec = props.isRecurring;
+            let dateDetail = "";
+            if (isRec) {
+                const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
+                const dStrs = target.daysOfWeek ? target.daysOfWeek.map(d => dayNames[d]) : [];
+                dateDetail = `毎週 [${dStrs.join(', ')}]`;
+            } else {
+                dateDetail = selectedEventDate;
+            }
+
+            const startTime = isRec ? target.startTime.substring(0, 5) : target.start.split('T')[1].substring(0, 5);
+            const endTime = isRec ? target.endTime.substring(0, 5) : target.end.split('T')[1].substring(0, 5);
+
+            const shareText = `⚽【オープンプレー情報】\n━━━━━━━━━━━━━━\n🏆 主催: ${props.host}\n📅 日時: ${dateDetail} (${startTime}〜${endTime})\n📍 場所: ${props.location}\n🔗 詳細・公式リンク: ${props.link}\n━━━━━━━━━━━━━━\n※PH Soccer Open Play Calendar`;
+
+            // Utilize native OS web share panel on iOS/Android if available, fall back to clipboard
+            if (navigator.share) {
+                navigator.share({
+                    title: `${props.host} オープンプレー`,
+                    text: shareText
+                }).catch(err => console.log("Share failed or cancelled:", err));
+            } else {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert("共有用テキストをコピーしました！LINEやTelegram等のチャットに貼り付けて共有できます。");
+                }).catch(err => {
+                    console.error("クリップボード書き込みエラー:", err);
+                    alert("自動コピーに失敗しました。テキストを選択して共有してください。");
+                });
+            }
+        }
+
         function renderTodayTomorrowSchedule() {
             const container = document.getElementById('todayTomorrowSchedule');
             if (!container) return;
@@ -1212,7 +1425,20 @@
                 const dateEvents = [];
                 const dayOfWeek = dateObj.getDay();
 
-                approvedEvents.forEach(e => {
+                let filteredEvents = approvedEvents;
+
+                // Restrict results dynamically based on active GPS distance limits
+                if (distanceFilterLimit !== null && userCoords) {
+                    filteredEvents = filteredEvents.filter(e => {
+                        const locName = e.extendedProps.location;
+                        const coords = STADIUM_COORDINATES[locName];
+                        if (!coords) return false;
+                        const dist = calculateDistance(userCoords.lat, userCoords.lng, coords.lat, coords.lng);
+                        return dist <= distanceFilterLimit;
+                    });
+                }
+
+                filteredEvents.forEach(e => {
                     const isRec = e.extendedProps.isRecurring;
                     const exceptions = e.extendedProps.exceptions || [];
                     if (exceptions.includes(dateStr)) return;
