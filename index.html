@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PH Soccer Open Play Calendar</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link class="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- FullCalendar JS Bundle (V6 auto-injects styles) -->
@@ -102,10 +103,11 @@
                 <span class="font-bold text-slate-400 flex items-center gap-1.5 shrink-0">
                     <i class="fa-solid fa-map-pin text-rose-500"></i> エリア絞り込み:
                 </span>
-                <div class="flex gap-1.5">
+                <div class="flex flex-wrap gap-1.5">
                     <button onclick="setDistanceFilter('all')" id="filter-dist-all" class="px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition">すべて</button>
-                    <button onclick="setDistanceFilter(5)" id="filter-dist-5" class="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition">5km以内</button>
-                    <button onclick="setDistanceFilter(10)" id="filter-dist-10" class="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition">10km以内</button>
+                    <button onclick="setDistanceFilter(5)" id="filter-dist-5" class="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition">5km</button>
+                    <button onclick="setDistanceFilter(10)" id="filter-dist-10" class="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition">10km</button>
+                    <button onclick="setDistanceFilter(30)" id="filter-dist-30" class="px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition">30km</button>
                 </div>
                 <span id="locationStatusText" class="text-[10px] text-slate-500 font-semibold sm:ml-auto ml-1 font-mono truncate">現在地未取得</span>
             </div>
@@ -439,12 +441,12 @@
 
         const defaultLocations = ["Turf BGC", "Vermosa Sports Hub", "McKinley Hill Stadium", "Circuit Makati"];
 
-        // GPS coordinates lookup map for Manila/Taguig soccer grounds
+        // Exact high-accuracy GPS coordinates for Manila/Taguig soccer grounds to align with map routing correctly
         const STADIUM_COORDINATES = {
-            "Turf BGC": { lat: 14.5518, lng: 121.0505 },
-            "Vermosa Sports Hub": { lat: 14.3986, lng: 120.9774 },
-            "McKinley Hill Stadium": { lat: 14.5312, lng: 121.0478 },
-            "Circuit Makati": { lat: 14.5724, lng: 121.0189 }
+            "Turf BGC": { lat: 14.5536, lng: 121.0511 },
+            "Vermosa Sports Hub": { lat: 14.3809, lng: 120.9607 },
+            "McKinley Hill Stadium": { lat: 14.5303, lng: 121.0542 },
+            "Circuit Makati": { lat: 14.5752, lng: 121.0200 }
         };
 
         let events = [];
@@ -462,7 +464,10 @@
 
         // GPS state variables
         let userCoords = null;
-        let distanceFilterLimit = null; // 'all' (null) or number (5, 10)
+        let distanceFilterLimit = null; // 'all' (null) or number (5, 10, 30)
+
+        // URL Deep-linking processor flag
+        let hasProcessedDeepLink = false;
 
         // Active Firestore Unsubscribe functions
         let unsubscribeEvents = null;
@@ -540,10 +545,12 @@
             const btnAll = document.getElementById('filter-dist-all');
             const btn5 = document.getElementById('filter-dist-5');
             const btn10 = document.getElementById('filter-dist-10');
+            const btn30 = document.getElementById('filter-dist-30');
 
             btnAll.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition";
             btn5.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition";
             btn10.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition";
+            btn30.className = "px-2.5 py-1 rounded bg-slate-800 text-slate-400 hover:bg-slate-700 font-semibold transition";
 
             if (distanceFilterLimit === null) {
                 btnAll.className = "px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition";
@@ -551,6 +558,8 @@
                 btn5.className = "px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition";
             } else if (distanceFilterLimit === 10) {
                 btn10.className = "px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition";
+            } else if (distanceFilterLimit === 30) {
+                btn30.className = "px-2.5 py-1 rounded bg-slate-700 text-slate-100 font-semibold transition";
             }
         }
 
@@ -895,6 +904,7 @@
             updateLocationSelect();
             renderLocationManager();
             renderTodayTomorrowSchedule();
+            checkDeepLink(); // Evaluates and pops open target event from shared URL configuration
         }
 
         function handleLogoFileSelect(input) {
@@ -1242,7 +1252,7 @@
             document.getElementById('detailAuthor').innerText = props.author || '';
             document.getElementById('detailDate').innerText = selectedEventDate;
 
-            // Direct route navigation configuration based on stadium coordinates lookup
+            // Direct route navigation configuration based on stadium coordinates lookup (Google Maps/Waze fallback)
             const mapBtn = document.getElementById('detailLocationMap');
             const coords = STADIUM_COORDINATES[detailLocText];
             if (coords) {
@@ -1390,7 +1400,11 @@
             const startTime = isRec ? target.startTime.substring(0, 5) : target.start.split('T')[1].substring(0, 5);
             const endTime = isRec ? target.endTime.substring(0, 5) : target.end.split('T')[1].substring(0, 5);
 
-            const shareText = `⚽【オープンプレー情報】\n━━━━━━━━━━━━━━\n🏆 主催: ${props.host}\n📅 日時: ${dateDetail} (${startTime}〜${endTime})\n📍 場所: ${props.location}\n🔗 詳細・公式リンク: ${props.link}\n━━━━━━━━━━━━━━\n※PH Soccer Open Play Calendar`;
+            // Generates a deep link directing users back to this specific calendar schedule
+            const siteUrl = window.location.origin + window.location.pathname;
+            const deepLink = `${siteUrl}?eventId=${target.id}&eventDate=${selectedEventDate}`;
+
+            const shareText = `⚽【オープンプレー情報】\n━━━━━━━━━━━━━━\n🏆 主催: ${props.host}\n📅 日時: ${dateDetail} (${startTime}〜${endTime})\n📍 場所: ${props.location}\n🔗 詳細・スケジュール確認:\n${deepLink}\n━━━━━━━━━━━━━━\n※PH Soccer Open Play Calendar`;
 
             // Utilize native OS web share panel on iOS/Android if available, fall back to clipboard
             if (navigator.share) {
@@ -1405,6 +1419,21 @@
                     console.error("クリップボード書き込みエラー:", err);
                     alert("自動コピーに失敗しました。テキストを選択して共有してください。");
                 });
+            }
+        }
+
+        // Deep linking auto-opener to display mapped items on page load
+        function checkDeepLink() {
+            if (hasProcessedDeepLink || events.length === 0) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            const queryEventId = urlParams.get('eventId');
+            const queryEventDate = urlParams.get('eventDate');
+            if (queryEventId) {
+                const target = events.find(e => e.id === queryEventId);
+                if (target) {
+                    hasProcessedDeepLink = true;
+                    openDetailModalFromTodayTomorrow(queryEventId, queryEventDate || "");
+                }
             }
         }
 
@@ -1544,64 +1573,6 @@
             const d = date.getDate();
             const dayNames = ["日", "月", "火", "水", "木", "金", "土"];
             return `${m}/${d}(${dayNames[date.getDay()]})`;
-        }
-
-        async function handleDelete() {
-            if(!selectedEventId) return;
-
-            const targetEvent = events.find(e => e.id === selectedEventId);
-            if(!targetEvent) return;
-
-            const props = targetEvent.extendedProps;
-            const isRec = props.isRecurring;
-
-            if (!isAdmin) {
-                const pass = prompt("本人確認のため、申請時に設定した「削除用パスワード」を入力してください:");
-                if (!pass) return;
-
-                const hashedInput = await hashPassword(pass);
-                if (hashedInput !== props.deletePassword) {
-                    alert("パスワードが違います。削除権限がありません。");
-                    return;
-                }
-            }
-
-            if (isRec) {
-                const mode = prompt(
-                    `これは定期開催イベントです。削除方法を選んでください：\n\n` +
-                    `「1」を入力：今回（${selectedEventDate}）のみ削除\n` +
-                    `「2」を入力：この定期スケジュールをすべて削除\n\n` +
-                    `キャンセルする場合は何も入力せず閉じてください。`
-                );
-
-                if (mode === "1") {
-                    let exceptions = props.exceptions || [];
-                    if (!exceptions.includes(selectedEventDate)) {
-                        exceptions.push(selectedEventDate);
-                    }
-                    await updateEventDoc(selectedEventId, { "extendedProps.exceptions": exceptions });
-                    alert(`${selectedEventDate} の回を非表示にしました。`);
-                } else if (mode === "2") {
-                    if (confirm("本当にこの定期開催スケジュールを完全に削除しますか？")) {
-                        await removeEvent(selectedEventId);
-                        alert("定期スケジュールをすべて削除しました。");
-                    } else {
-                        return;
-                    }
-                } else {
-                    if (mode !== null) alert("無効な入力です。削除をキャンセルしました。");
-                    return;
-                }
-            } else {
-                if(confirm("このイベントを削除しますか？")) {
-                    await removeEvent(selectedEventId);
-                    alert("イベントを削除しました。");
-                } else {
-                    return;
-                }
-            }
-
-            closeModal('detailModal');
         }
 
         async function handleFormSubmit(e) {
@@ -2009,6 +1980,15 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.add('hidden');
+            if (id === 'detailModal') {
+                // Instantly remove URL parameters so subsequent updates won't pop open deep link details
+                try {
+                    const url = new URL(window.location);
+                    url.searchParams.delete('eventId');
+                    url.searchParams.delete('eventDate');
+                    window.history.replaceState({}, '', url);
+                } catch(e) { console.warn(e); }
+            }
         }
 
         function toggleScheduleTypeField(type) {
